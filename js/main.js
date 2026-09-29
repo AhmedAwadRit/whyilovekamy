@@ -610,7 +610,9 @@
     // (after the afterparty they hop and cheer for a few seconds)
     const cheering = state.party && state.t - state.party.t0 < 6;
     const hop = cheering && Math.floor(state.t * 6) % 2 ? 1 : 0;
-    ctx.drawImage(cheering ? (hop ? S.friends.point : S.friends.base) : friendsFrame(), mound.friendsX, mound.friendsTop - 4 - hop);
+    if (state.tickle) drawTickle();
+    else ctx.drawImage(cheering ? (hop ? S.friends.point : S.friends.base) : friendsFrame(), mound.friendsX, mound.friendsTop - 4 - hop);
+    drawBook();
     drawSnackTower();
     drawWishStar();
 
@@ -841,8 +843,11 @@
       const k = kPos();
       if (p.x >= k.x - 3 && p.x <= k.x + 10 && p.y >= k.y - 3 && p.y <= k.y + 12) return { kind: 'initial', x: k.x + 3, y: k.y };
     }
-    // the two silhouettes open her notebook
-    if (p.x >= mound.friendsX - 2 && p.x <= mound.friendsX + 17 && p.y >= mound.friendsTop - 3 && p.y <= mound.friendsTop + 9) {
+    // her notebook, on the grass beside them
+    const bk = bookPos();
+    if (p.x >= bk.x - 3 && p.x <= bk.x + 9 && p.y >= bk.y - 4 && p.y <= bk.y + 6) return { kind: 'book', x: bk.x + 3, y: bk.y };
+    // the two of them: a little tickle fight
+    if (p.x >= mound.friendsX - 1 && p.x <= mound.friendsX + 16 && p.y >= mound.friendsTop - 3 && p.y <= mound.friendsTop + 9) {
       return { kind: 'friends', x: mound.friendsX + 7, y: mound.friendsTop };
     }
     // the lost firefly
@@ -866,7 +871,8 @@
     if (t.kind === 'ship') return (C.game && C.game.shipLabel) || 'a little game';
     if (t.kind === 'wish') return WI.starTitle;
     if (t.kind === 'initial') return 'psst';
-    if (t.kind === 'friends') return (C.notebook && C.notebook.label) || 'a notebook';
+    if (t.kind === 'book') return (C.notebook && C.notebook.label) || 'a notebook';
+    if (t.kind === 'friends') return 'the two of you';
     if (t.kind === 'firefly') return (C.fireflies && C.fireflies.label) || 'a lost firefly';
     if (t.kind === 'shooting' && t.victory) return 'catch it!';
     return '';
@@ -932,7 +938,8 @@
     }
     if (t.kind === 'wish') { A.sfx('star'); return openDialog(WI.starTitle, wishStarLine()); }
     if (t.kind === 'initial') return openK();
-    if (t.kind === 'friends') return openNotebook();
+    if (t.kind === 'book') return openNotebook();
+    if (t.kind === 'friends') return startTickle();
     if (t.kind === 'firefly') return openFireflies();
     if (t.kind === 'item') { A.sfx('open'); t.action(); }
     if (t.planted) { A.sfx('star'); openDialog(`planted ${fmtDate(t.date)}`, t.note); }
@@ -1356,6 +1363,96 @@
     window.FIREFLIES.open(res => { if (res && res.complete) setTimeout(fireflyFinale, 700); });
   }
 
+  /* ---- Tickle fight (tap the two of them) -------------------------------- */
+  /* She tickles him, he laughs; he tickles her back, she gets mad; then
+     they sit back down like nothing happened. */
+  const TICKLE_LEN = 8;
+
+  function startTickle() {
+    if (state.tickle) return;
+    state.moment.t0 = null; // interrupt any quiet moment, and give them a minute before the next
+    state.moment.next = state.calm + 60;
+    state.tickle = { t0: state.t };
+    A.sfx('blip');
+  }
+
+  function tinyText(str, x, y, color) {
+    ctx.fillStyle = color;
+    let cx = Math.round(x);
+    for (const ch of str.toUpperCase()) {
+      const gl = FONT[ch] || FONT[' '];
+      gl.forEach((row, yy) => [...row].forEach((c, xx) => { if (c === '1') ctx.fillRect(cx + xx, Math.round(y) + yy, 1, 1); }));
+      cx += gl[0].length + 1;
+    }
+  }
+
+  // a short arm from (x0,y0) to (x1,y1), with a moonlit pixel on it
+  function arm(x0, y0, x1, y1) {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+    ctx.fillStyle = '#080a20';
+    for (let i = 0; i <= n; i++) ctx.fillRect(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), 1, 1);
+    ctx.fillStyle = '#4a4f9a';
+    ctx.fillRect(Math.round(x1), Math.round(y1) - 1, 1, 1);
+  }
+
+  function drawTickle() {
+    const tk = state.tickle, e = state.t - tk.t0;
+    const x0 = mound.friendsX, top = mound.friendsTop;
+    const wig = Math.floor(e * 12) % 2;
+    let gx = 0, gy = 0, bx = 0, by = 0, who = null, angry = false, sweat = false;
+
+    if (e < 0.5) gx = 1;                                   // she turns to him...
+    else if (e < 2.9) {                                    // ...and tickles; he can't stop laughing
+      gx = 1; who = 'her';
+      bx = Math.floor(e * 10) % 2; by = -(Math.floor(e * 7) % 2);
+    } else if (e < 3.5) { /* he catches his breath */ }
+    else if (e < 4.2) { bx = -1; who = 'him'; }            // his turn...
+    else if (e < 6.2) {                                    // ...she is NOT amused: stands up, scoots away
+      bx = -1; who = e < 5.2 ? 'him' : null; angry = true;
+      gx = -2; gy = -2;
+      sweat = e > 5.2;
+    } else if (e < 6.9) { angry = true; gx = -1; gy = -1; sweat = true; } // sitting back down, still grumpy
+    // then back to how they were
+
+    ctx.drawImage(S.friends.girl, x0 + gx, top + gy);
+    ctx.drawImage(S.friends.guy, x0 + 7 + bx, top + by);
+
+    if (who === 'her') arm(x0 + gx + 5, top + gy + 5, x0 + 8 + bx, top + by + 5 + wig);
+    if (who === 'him') arm(x0 + 8 + bx, top + by + 5, x0 + gx + 5, top + gy + 5 + wig);
+
+    // "HA HA" floating up while he laughs
+    for (let k = 0; k < 5; k++) {
+      const age = e - (0.7 + k * 0.42);
+      if (age < 0 || age > 1.1) continue;
+      if (age > 0.8 && Math.floor(age * 20) % 2) continue;
+      tinyText('HA', x0 + 9 + bx + (k % 2 ? 4 : -3), top - 7 - age * 7, k % 2 ? '#ffe7a0' : '#ff9ec4');
+    }
+    if (angry && Math.floor(e * 5) % 2 === 0) ctx.drawImage(S.anger, x0 + gx, top + gy - 7);
+    if (angry && e > 4.3 && e < 5.0) tinyText('!', x0 + gx + 6, top + gy - 8, '#ff5c5c');
+    if (sweat) { ctx.fillStyle = '#9fd4ff'; ctx.fillRect(x0 + 15 + bx, top + by - 1 + Math.floor((e * 4) % 3), 1, 2); }
+
+    if (e >= TICKLE_LEN - 1) {                             // they've made up
+      state.tickle = null;
+      state.heartT = 0;
+    }
+  }
+
+  function bookPos() {
+    const x = mound.friendsX - 9;
+    return { x, y: hillY(x + 3) - 3 };
+  }
+  function drawBook() {
+    const { x, y } = bookPos();
+    if (state.hover && state.hover.kind === 'book') {
+      ctx.fillStyle = '#fff3d6';
+      ctx.fillRect(x - 1, y - 1, 8, 1); ctx.fillRect(x - 1, y + 3, 8, 1);
+      ctx.fillRect(x - 1, y, 1, 3); ctx.fillRect(x + 6, y, 1, 3);
+    }
+    ctx.drawImage(S.book, x, y);
+    // a little glint now and then, so she knows it's something
+    if (Math.sin(state.t * 0.9) > 0.985) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 4, y - 2, 1, 1); }
+  }
+
   /* ---- The afterparty snack: the two of them celebrate it --------------- */
   function celebrate(snack) {
     state.party = { t0: state.t, colors: (snack.colors || []).slice(0, 14), name: snack.name };
@@ -1504,7 +1601,7 @@
   }
 
   function updateMoment(dt) {
-    const calm = state.started && !state.modal && !state.dialog && !state.placing && !window.GAME.isOpen && !window.MINI.isOpen && !document.hidden;
+    const calm = state.started && !state.modal && !state.dialog && !state.placing && !state.tickle && !window.GAME.isOpen && !window.MINI.isOpen && !document.hidden;
     if (calm) state.calm += dt;
     // confetti while they celebrate a victory snack
     const pa = state.party;
@@ -1894,6 +1991,8 @@
     friends: () => ({ x: mound.friendsX, top: mound.friendsTop, peakX: mound.peakX }),
     firefly: () => ({ x: fireflies[0].x, y: fireflies[0].y }),
     finale: () => fireflyFinale(),
+    book: () => bookPos(),
+    tickling: () => !!state.tickle,
     celebrate: s => celebrate(s),
     visible: () => state.visible
   };

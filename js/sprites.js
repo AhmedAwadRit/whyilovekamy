@@ -145,12 +145,21 @@ window.SPRITES = (() => {
     }
     return make(grid.map(r => r.join('')), { k: '#080a20', m: '#4a4f9a' });
   }
+  const FRIEND_PAL = { k: '#080a20', m: '#4a4f9a' };
   const friends = {
     bodyW: 15, bodyH: 9,
     base: friendsFrame(false, false),
     point: friendsFrame(true, false),
-    both: friendsFrame(true, true)
+    both: friendsFrame(true, true),
+    // each of them on their own, for the tickle scene (her on the left, him on the right)
+    girl: make(FRIENDS.map(r => r.slice(0, 7)), FRIEND_PAL),
+    guy: make(FRIENDS.map(r => r.slice(7)), FRIEND_PAL)
   };
+
+  // her notebook, lying on the grass next to them
+  const book = make(['pppppp', 'pwwwww', 'pppppp', '..r...'], { p: '#ff9ec4', w: '#fff4e2', r: '#ff5c8a' });
+  // the little "angry" mark
+  const anger = make(['.r.r.', 'rr.rr', '.....', 'rr.rr', '.r.r.'], { r: '#ff5c5c' });
 
   const pineappleTiny = make(['g.g', '.g.', 'yoy', 'oyo', 'yoy'], { g: '#4caf50', y: '#ffd23f', o: '#c98a1b' });
 
@@ -245,7 +254,7 @@ window.SPRITES = (() => {
 
   return {
     canvas, make, outline, flower,
-    headphones, envelope, camera, seeds, tape, friends, pineappleTiny, heart, smallHeart,
+    headphones, envelope, camera, seeds, tape, friends, pineappleTiny, book, anger, heart, smallHeart,
     speakerOn, speakerOff, star, starRead,
     HEAD_COUNT: HEADS.length, COLOR_COUNT: COLORS.length,
     COLORS
