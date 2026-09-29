@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>why i love kamy</title>
+  <meta name="description" content="a little field of stars, just for you.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#070920">
+  <meta property="og:title" content="why i love kamy">
+  <meta property="og:description" content="a little field of stars, just for you.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://whyilovekamy.com/">
+  <meta property="og:image" content="https://whyilovekamy.com/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A pixel-art field of flowers under a starry night sky">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://whyilovekamy.com/assets/og-image.png">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="scene" aria-label="A pixel-art field of flowers under a starry night sky"></canvas>
+
+  <div id="hud" class="hidden" aria-live="polite">
+    <span class="hud-item"><img id="hud-flower" alt=""><b id="flower-count">0</b></span>
+    <span class="hud-item"><img id="hud-star" alt=""><b id="star-count">0/0</b></span>
+    <button id="replay-stars" class="hud-btn" type="button" hidden>replay</button>
+    <button id="reset-stars" class="hud-btn" type="button" hidden>reset</button>
+  </div>
+  <button id="mute" class="hidden" aria-label="Mute music"><img id="mute-icon" alt=""></button>
+
+  <div id="tooltip" role="tooltip"></div>
+  <div id="hint" class="hidden"></div>
+  <div id="toast"></div>
+  <div id="flash"></div>
+
+  <!-- RPG-style text box for star notes -->
+  <div id="dialog-layer">
+    <div id="dialog" class="pixel-box" role="dialog" aria-live="polite">
+      <div id="dialog-title"></div>
+      <div id="dialog-text"></div>
+      <div id="dialog-next"></div>
+    </div>
+  </div>
+
+  <!-- Letter -->
+  <div class="modal" id="letter-modal" role="dialog" aria-label="A letter for you">
+    <div class="backdrop" data-close></div>
+    <div class="panel letter">
+      <button class="close" data-close aria-label="Close">x</button>
+      <div class="paper">
+        <p class="greeting" id="letter-greeting"></p>
+        <div id="letter-body"></div>
+        <p class="signoff" id="letter-signoff"></p>
+        <p class="signature" id="letter-signature"></p>
+        <button id="letter-plane" class="pixel-btn" type="button"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Playlist -->
+  <div class="modal" id="playlist-modal" role="dialog" aria-label="Playlist">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box playlist">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="playlist-title"></h2>
+      <div id="playlist-body"></div>
+    </div>
+  </div>
+
+  <!-- Shooting-star wish -->
+  <div class="modal" id="wish-modal" role="dialog" aria-labelledby="wish-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box wish">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="wish-title"></h2>
+      <p id="wish-prompt"></p>
+      <textarea id="wish-text" maxlength="500" rows="3"></textarea>
+      <label class="wish-share"><input type="checkbox" id="wish-share"> <span id="wish-share-label"></span></label>
+      <p id="wish-msg"></p>
+      <button id="wish-seal" class="pixel-btn" type="button"></button>
+    </div>
+  </div>
+
+  <!-- Her notebook -->
+  <div class="modal" id="notebook-modal" role="dialog" aria-labelledby="nb-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel notebook">
+      <button class="close" data-close aria-label="Close">x</button>
+      <div class="paper">
+        <p class="greeting" id="nb-title"></p>
+        <textarea id="nb-text" rows="4" maxlength="4000"></textarea>
+        <div class="nb-row">
+          <button id="nb-save" class="pixel-btn" type="button">save page</button>
+          <span id="nb-msg"></span>
+        </div>
+        <div id="nb-pages"></div>
+        <p class="nb-privacy" id="nb-privacy"></p>
+        <button id="nb-download" class="nb-link" type="button">download a copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- What's behind the K -->
+  <div class="modal" id="k-modal" role="dialog" aria-label="A note">
+    <div class="backdrop" data-close></div>
+    <div class="panel k-card">
+      <button class="close" data-close aria-label="Close">x</button>
+      <img id="k-image" alt="" hidden>
+      <p id="k-line"></p>
+      <button id="k-play" class="pixel-btn" type="button" hidden>play</button>
+    </div>
+  </div>
+
+  <!-- Cassette -->
+  <div class="modal" id="tape-modal" role="dialog" aria-labelledby="tape-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box tape">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="tape-title"></h2>
+      <div class="cassette">
+        <canvas id="tape-canvas" width="64" height="40"></canvas>
+        <span id="tape-label"></span>
+      </div>
+      <div class="tape-progress"><i id="tape-bar"></i></div>
+      <div class="tape-row">
+        <button id="tape-play" class="pixel-btn" type="button">play</button>
+        <span id="tape-time">0:00</span>
+      </div>
+      <p id="tape-msg"></p>
+      <audio id="tape-audio" preload="metadata"></audio>
+    </div>
+  </div>
+
+  <!-- Gallery -->
+  <div class="modal" id="gallery-modal" role="dialog" aria-label="Photos">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box gallery">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2>us</h2>
+      <div id="gallery-grid"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="lightbox" role="dialog" aria-label="Photo">
+    <div class="backdrop" data-close></div>
+    <div class="lightbox-inner">
+      <button class="close" data-close aria-label="Close">x</button>
+      <button class="nav prev" id="lb-prev" aria-label="Previous photo">&lt;</button>
+      <figure class="polaroid big">
+        <img id="lb-img" alt="">
+        <canvas id="lb-film" hidden aria-label="An undeveloped photo. Rub it to develop."></canvas>
+        <figcaption id="lb-caption"></figcaption>
+      </figure>
+      <button class="nav next" id="lb-next" aria-label="Next photo">&gt;</button>
+    </div>
+  </div>
+
+  <!-- Plant a flower -->
+  <div class="modal" id="plant-modal" role="dialog" aria-labelledby="plant-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box planter">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="plant-title"></h2>
+      <div id="plant-preview"></div>
+      <p class="pick-label">flower</p>
+      <div class="pick-row" id="pick-head"></div>
+      <p class="pick-label">color</p>
+      <div class="pick-row" id="pick-color"></div>
+      <label class="pick-label" for="plant-note" id="plant-note-label"></label>
+      <textarea id="plant-note" maxlength="280" rows="4"></textarea>
+      <div class="plant-foot">
+        <span id="plant-msg"></span>
+        <span id="plant-count">0/280</span>
+      </div>
+      <button id="plant-go" class="pixel-btn" type="button"></button>
+    </div>
+  </div>
+
+  <div id="place-bar" class="hidden">
+    <span id="place-hint"></span>
+    <button id="place-cancel" class="pixel-btn" type="button">cancel</button>
+  </div>
+
+  <!-- Minigame -->
+  <div id="game" hidden role="dialog" aria-label="Snack attack minigame">
+    <div id="game-frame">
+      <canvas id="game-canvas" width="160" height="224"></canvas>
+      <div id="game-hud"><div id="game-hearts"></div><div id="game-score"></div></div>
+      <div id="boss-bar" hidden><span id="boss-name"></span><div class="bar"><i id="boss-hp"></i></div></div>
+      <div id="game-warning" hidden></div>
+      <div id="game-floaters"></div>
+      <button id="game-fire" type="button" hidden aria-label="Fire">fire</button>
+      <div id="game-screen" hidden></div>
+    </div>
+    <button id="game-close" class="close" aria-label="Close game">x</button>
+  </div>
+
+  <!-- Cozy minigames: paper planes, fireflies -->
+  <div id="mini" hidden role="dialog" aria-label="Minigame">
+    <div id="mini-frame">
+      <canvas id="mini-canvas"></canvas>
+      <div id="mini-hud"></div>
+      <div id="mini-screen" hidden></div>
+    </div>
+    <button id="mini-close" class="close" aria-label="Close">x</button>
+  </div>
+
+  <!-- Title screen -->
+  <div id="title-screen">
+    <div class="title-inner">
+      <button id="title-heart-btn" type="button" aria-label="heart"><img id="title-heart" alt=""></button>
+      <p id="title-secret" aria-live="polite"></p>
+      <h1 id="title-text"></h1>
+      <p id="title-sub"></p>
+      <form id="gate" class="hidden" autocomplete="off">
+        <label id="gate-q" for="gate-input"></label>
+        <input id="gate-input" type="text" spellcheck="false">
+        <p id="gate-msg"></p>
+      </form>
+      <button id="start" class="blink">press start</button>
+      <p class="sound-note">(sound on)</p>
+    </div>
+  </div>
+
+  <audio id="bgm" loop preload="auto"></audio>
+
+  <script src="js/content.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/cloud.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/mini.js"></script>
+  <script src="js/plane.js"></script>
+  <script src="js/fireflies.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
