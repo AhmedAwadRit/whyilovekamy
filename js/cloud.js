@@ -35,6 +35,11 @@ window.CLOUD = (() => {
     getGarden: () => call('/rest/v1/garden?select=count&id=eq.1').then(r => ({ count: r[0] ? r[0].count : 0, grew: false })),
     planted: () => call('/rest/v1/planted?select=id,created_at,fx,fy,head,color,note&order=id'),
     shareWish: text => call('/rest/v1/rpc/share_wish', { p_wish: text }),
-    plant: f => call('/rest/v1/rpc/plant_flower', { p_fx: f.fx, p_fy: f.fy, p_head: f.head, p_color: f.color, p_note: f.note })
+    plant: f => call('/rest/v1/rpc/plant_flower', { p_fx: f.fx, p_fy: f.fy, p_head: f.head, p_color: f.color, p_note: f.note }),
+    // the arcade: prank platformer levels and ghost-race runs
+    levels: () => call('/rest/v1/prank_levels?select=id,author,name,data&order=id'),
+    saveLevel: (author, name, data) => call('/rest/v1/rpc/save_prank_level', { p_author: author, p_name: name, p_data: data }),
+    ghosts: () => call('/rest/v1/ghosts?select=who,time,run'),
+    saveGhost: (who, time, run) => call('/rest/v1/rpc/save_ghost', { p_who: who, p_time: time, p_run: run })
   };
 })();

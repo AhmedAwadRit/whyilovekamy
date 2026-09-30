@@ -477,6 +477,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 #mini-screen .pixel-btn { font-size: 9px; margin-top: 4px; }
 #mini-screen .arcade-list { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: min(100%, 250px); }
 #mini-screen .arcade-list .pixel-btn { margin: 0; }
+#mini-screen .arcade-list .line { margin: 6px 0 0; text-align: left; }
+#mini-screen .mini-input {
+  width: min(100%, 260px); padding: 8px 10px; font: 22px var(--body, 'VT323', monospace); color: var(--ink, #1a1030);
+  background: #fff4e2; border: 0; box-shadow: 0 0 0 3px var(--border); outline: none;
+}
 
 /* ---- "?" help buttons and panels ------------------------------------------- */
 .help-btn {
