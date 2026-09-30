@@ -87,7 +87,10 @@
       <h2 id="lock-title"></h2>
       <p id="lock-text"></p>
       <form id="lock-form" autocomplete="off">
-        <input id="lock-input" type="password" spellcheck="false" autocomplete="off" aria-label="Passcode">
+        <div class="lock-field">
+          <span id="lock-prefix" hidden></span>
+          <input id="lock-input" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Your answer">
+        </div>
         <button class="pixel-btn" type="submit">unlock</button>
       </form>
       <p id="lock-msg"></p>
@@ -241,7 +244,7 @@
       <p id="title-sub"></p>
       <form id="gate" class="hidden" autocomplete="off">
         <label id="gate-q" for="gate-input"></label>
-        <input id="gate-input" type="password" spellcheck="false" autocomplete="off">
+        <input id="gate-input" type="text" spellcheck="false" autocomplete="off" autocapitalize="off">
         <p id="gate-msg"></p>
       </form>
       <button id="start" class="blink">press start</button>

@@ -2,6 +2,11 @@
   'use strict';
   const C = window.KAMY;
   const $ = id => document.getElementById(id);
+
+  // behind the same passcode as the main page
+  let passed = false;
+  try { passed = !C.gate || JSON.parse(localStorage.getItem('kamy.gate') || 'null') === C.gate.hash; } catch (e) {}
+  if (!passed) { location.replace('./'); return; }
   const sleep = ms => new Promise(r => setTimeout(r, fast ? 0 : ms));
   let fast = false;
 

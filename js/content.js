@@ -32,12 +32,17 @@ window.KAMY = {
   /* Passcode to enter the site. Only its hash is stored here; make one with
        node scripts/lock.mjs hash "your passcode"
      Once she's entered it, her device remembers. Set to null to turn it off. */
-  gate: null,
-  // gate: { question: "passcode?", hash: "..." },
+  gate: {
+    question: "What is our favorite librarian:",
+    hash: "d09ae3ced0913976a80510860f28db4ccd3b298f58da7fe17a88e56b6fc11562"
+  },
 
-  /* Stars can be locked with a passcode: instead of text, put
-       { locked: "..." }   made with   node scripts/lock.mjs lock "passcode" "text"
-     The words are encrypted, so they can't be read in the site's files. */
+  /* Stars can be locked with a question: instead of text, put
+       { question: "...", locked: "..." }
+     where locked is made with   node scripts/lock.mjs lock "answer" "text"
+     (a list of several locked versions accepts several answers; prefix shows
+     greyed-out words before her answer). The words are encrypted, so they
+     can't be read in the site's files. */
   lockedStars: {
     title: "a locked reason",
     prompt: "this one's just for you. what's the passcode?"
@@ -107,7 +112,11 @@ window.KAMY = {
      number of glowing stars, so keep it around 8 to 25. */
   reasons: [
     "You were always there for me, and I'll never forget that Kamy",
-    "You're such a heavy sleeper, it makes kissing your forehead easy while you sleep",
+    { // locked (original text is in private/locked-stars.txt)
+      question: "What's my favorite thing about you",
+      prefix: "Your",
+      locked: "V95HBENNsFSc9wXfF/mE4U8t7iATxWY6b5Q+i9bfg3L0K9a66UzRBfSC18QRFEkB4xRNU3qOK56No5EVgfCQvsypHuuN+n6uayHlOXD65l6nNzIkuXwiJp9WRndBXg/egorVLlvWZ45GaxrPdqvPmEc0mgPBz5CNdN3rAQ=="
+    },
     "You're the first person i want to tell when anything happens, good or bad.",
     "You never make me feel like too much.",
     "You're the first person to make me feel like I matter",
@@ -117,7 +126,13 @@ window.KAMY = {
     "You make the most boring errands feel like an adventure.",
     "You believe in me on the days I don't.",
     "Remember how you'd sound like everytime you say bro?",
-    "I already miss you falling asleep on my arms"
+    { // locked (original text is in private/locked-stars.txt); accepts "1" or "one"
+      question: "After how many drinks do you get drunk:",
+      locked: [
+        "gII4XnjpbK6MKBUox+6qOmsSKqccW//LX+4cqDgZWHj2noQ0apxvxKCk4TDIq5wmOcNiQ6XBKvVDklJWOaMsvrXAK6hxmCxvRz0XZBWLlNhgJy6ShumbtA==",
+        "x35VGURQ0kiSabzI12AYS8YY9yopwCgT/Umwf/Wx+uWZZLu3qrhlwCvKVeaGfoqHsA0fptzrjIBhxNAkwLgMzdcesGYyWzwV3f5NlvmprcNdlPbdYNKApQ=="
+      ]
+    }
   ],
   allStarsFound: "you found every star. there are more reasons than stars, but the sky only has so much room.",
 

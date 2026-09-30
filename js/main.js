@@ -993,10 +993,24 @@
   $('lock-text').textContent = LS.prompt || '';
   let lockTarget = null;
 
+  // each star has its own question, so remember each answer separately
   const session = {
-    get() { try { return sessionStorage.getItem(KEY_STARCODE); } catch (e) { return null; } },
-    set(v) { try { sessionStorage.setItem(KEY_STARCODE, v); } catch (e) {} }
+    get(i) { try { return sessionStorage.getItem(`${KEY_STARCODE}.${i}`); } catch (e) { return null; } },
+    set(i, v) { try { sessionStorage.setItem(`${KEY_STARCODE}.${i}`, v); } catch (e) {} }
   };
+
+  // try every accepted answer; "your smile" also works when the prefix is "Your"
+  async function unlockWith(r, code) {
+    const tries = [code];
+    const pre = norm(r.prefix || '');
+    if (pre && norm(code).startsWith(pre)) tries.push(norm(code).slice(pre.length));
+    for (const c of tries) {
+      for (const p of [].concat(r.locked)) {
+        try { return await decryptReason(p, c); } catch (e) { /* not this one */ }
+      }
+    }
+    throw new Error('wrong answer');
+  }
 
   async function decryptReason(payload, code) {
     const bytes = Uint8Array.from(atob(payload), c => c.charCodeAt(0));
@@ -1007,12 +1021,15 @@
   }
 
   async function openLockedStar(s, reason) {
-    const saved = session.get();
+    const saved = session.get(s.i);
     if (saved) {
-      try { return showReason(s, await decryptReason(reason.locked, saved)); } catch (e) { /* fall through to asking */ }
+      try { return showReason(s, await unlockWith(reason, saved)); } catch (e) { /* fall through to asking */ }
     }
     lockTarget = s;
     A.sfx('blip');
+    $('lock-text').textContent = reason.question || LS.prompt || '';
+    $('lock-prefix').textContent = reason.prefix || '';
+    $('lock-prefix').hidden = !reason.prefix;
     $('lock-input').value = '';
     $('lock-msg').textContent = '';
     openModal('lock-modal');
@@ -1024,8 +1041,8 @@
     const s = lockTarget, code = $('lock-input').value;
     if (!s) return;
     try {
-      const text = await decryptReason(C.reasons[s.i].locked, code);
-      session.set(code);
+      const text = await unlockWith(C.reasons[s.i], code);
+      session.set(s.i, code);
       closeModal();
       showReason(s, text);
     } catch (err) {

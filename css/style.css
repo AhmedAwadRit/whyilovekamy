@@ -229,12 +229,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .panel.lockbox { width: min(380px, 100%); padding: 18px 20px 20px; }
 #lock-text { font-size: 22px; color: var(--muted); margin: -8px 0 14px; }
 #lock-form { display: flex; gap: 12px; align-items: center; }
-#lock-input {
-  flex: 1; min-width: 0; font: inherit; font-size: 24px; padding: 6px 10px;
-  color: var(--text); background: var(--ink); border: 0; outline: 0;
-  box-shadow: 0 0 0 3px var(--panel-2); user-select: text;
+.lock-field {
+  flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px;
+  padding: 6px 10px; background: var(--ink); box-shadow: 0 0 0 3px var(--panel-2);
 }
-#lock-input:focus { box-shadow: 0 0 0 3px var(--gold); }
+.lock-field:focus-within { box-shadow: 0 0 0 3px var(--gold); }
+#lock-prefix { font-size: 24px; color: var(--faint, #6d6aa3); flex: none; }
+#lock-input {
+  flex: 1; min-width: 0; font: inherit; font-size: 24px; padding: 0;
+  color: var(--text); background: transparent; border: 0; outline: 0; user-select: text;
+}
 #lock-form .pixel-btn { margin: 0; font-size: 9px; }
 #lock-msg { min-height: 20px; font-size: 20px; color: var(--pink); margin: 10px 0 0; }
 .lockbox.shake { animation: shake .4s steps(6); }
