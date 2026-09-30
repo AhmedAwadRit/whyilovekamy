@@ -206,7 +206,10 @@ window.FIREFLIES = (() => {
     g.fillRect(sx - 4, sy + 6, 9, 1); g.fillRect(sx - 3, sy + 5, 1, 1); g.fillRect(sx + 1, sy + 4, 1, 2); g.fillRect(sx + 3, sy + 5, 1, 1);
   }
 
-  const def = { W, H, start, update, render, pointer, stop: () => { s = null; } };
+  const def = {
+    W, H, start, update, render, pointer, stop: () => { s = null; },
+    help: 'put your finger on the little group of fireflies and draw a path to their glass jar without lifting. go around the storm clouds; touching one scares them off. on level 3, draw your path past the lost firefly to pick it up. on level 4 their glow runs out, so find a short way. a path that doesn\'t work just fades away, so try again as much as you want.'
+  };
   return {
     open: done => window.MINI.open(def, done),
     LEVELS,

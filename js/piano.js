@@ -120,7 +120,10 @@ window.PIANO = (() => {
     tap(p);
   }
 
-  const def = { W, H, start, update, render, pointer, stop: () => { s = null; } };
+  const def = {
+    W, H, start, update, render, pointer, stop: () => { s = null; },
+    help: 'each star is a note: higher stars play higher notes. tap them to write a tune of up to 8 notes (it fills the little boxes). play hears it, undo removes the last note, clear starts over. save makes it your tune: it plays every time you open the site. "his tune" plays the melody he left here for you.'
+  };
   return {
     open: done => window.MINI.open(def, done),
     // her saved tune (midi notes), or null

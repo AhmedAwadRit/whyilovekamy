@@ -968,7 +968,7 @@
     if (t.kind === 'fortheart') { A.sfx('open'); return window.FORT.open(() => {}); }
     if (t.kind === 'door') return openDoor();
     if (t.kind === 'piano') { A.sfx('star'); return window.PIANO.open(() => {}); }
-    if (t.kind === 'cloud') { A.sfx('open'); return window.SHADOWS.open(() => {}); }
+    if (t.kind === 'cloud') { A.sfx('open'); return window.SHADOWS.open(res => { if (res && res.complete) store.set('kamy.shadows.done', true); }); }
     if (t.kind === 'friends') return startTickle();
     if (t.kind === 'firefly') return openFireflies();
     if (t.kind === 'item') { A.sfx('open'); t.action(); }
@@ -1379,7 +1379,7 @@
   $('letter-plane').addEventListener('click', () => {
     closeModal();
     A.sfx('open');
-    window.PLANE.open(() => {});
+    window.PLANE.open(res => { if (res && res.complete) store.set('kamy.plane.done', true); });
   });
 
   /* ---- Her notebook (tap the two silhouettes) ---------------------------- */
@@ -1521,7 +1521,7 @@
   function openFireflies() {
     A.sfx('open');
     hideHint();
-    window.FIREFLIES.open(res => { if (res && res.complete) setTimeout(fireflyFinale, 700); });
+    window.FIREFLIES.open(res => { if (res && res.complete) { store.set('kamy.fireflies.done', true); setTimeout(fireflyFinale, 700); } });
   }
 
   /* ---- Tickle fight (tap the two of them) -------------------------------- */
@@ -2085,6 +2085,78 @@
     }));
   }
 
+  /* ---- The field guide ("?" in the bottom-left corner) ------------------ */
+  /* Where everything is and how it works, with her progress. Where the
+     secret symbols are is hidden behind a spoiler button. */
+  const flag = k => { try { return localStorage.getItem(k) === '1' || localStorage.getItem(k) === 'true'; } catch (e) { return false; } };
+  function guideSections() {
+    const photos = C.photos.length, dev = C.photos.filter(p => !undeveloped(p)).length;
+    const syms = store.get(KEY_SYMS, []).length;
+    const tick = (done, text) => ({ done, text });
+    return [
+      ['the sky', [
+        ['the glowing stars', `each one holds a reason. tap them all. the lilac ones are locked with a question only you know the answer to. once you've found every star, they make a heart with a K in the middle, so tap the K too. "replay" and "reset" at the top let you watch it again or start over.`, tick(state.read.size >= stars.length, `${state.read.size}/${stars.length}`)],
+        ['shooting stars', 'every so often one streaks across the sky. catch it to make a wish and seal it in a star of its own.'],
+        ['the moon', 'tap it for "things i never tell you". stay until the end.'],
+        ['the music-note stars', 'the little note shape made of stars near the top opens the star piano. there\'s a tune waiting there for you.'],
+        ['the clouds', 'tap a drifting cloud for the shadow theater: slide clouds across the moon to make pictures.', tick(flag('kamy.shadows.done'), flag('kamy.shadows.done') ? 'done' : '')],
+        ['the little spaceship', 'snack attack! shoot the foods you hate, catch the ones you love, and beat the boss. winning unlocks an afterparty.', tick(flag('kamy.game.won'), flag('kamy.game.won') ? 'won' : '')]
+      ]],
+      ['the field', [
+        ['the flowers', 'a new one grows every day you visit. some days are special.', tick(false, `${state.visible} so far`)],
+        ['the headphones', 'our playlist.'],
+        ['the cassette', 'a tape I recorded for you.'],
+        ['the envelope', 'a letter. at the bottom, fold it into a paper plane and fly three little notes to three places.', tick(flag('kamy.plane.done'), flag('kamy.plane.done') ? 'done' : '')],
+        ['the camera', 'our photos. they start blurry: tap one and rub it gently to develop it. "reset photos" makes them blurry again.', tick(dev >= photos, `${dev}/${photos}`)],
+        ['the seed packet', 'plant your own flower with a note tucked inside. it stays in the field for good.'],
+        ['the brightest firefly', 'a lost one. tap it and draw glowing paths to lead the fireflies home.', tick(flag('kamy.fireflies.done'), flag('kamy.fireflies.done') ? 'done' : '')]
+      ]],
+      ['the hill', [
+        ['the two of us', 'tap them and see what happens. and if you stay in the field a while, watch them.'],
+        ['the little heart above them', 'our blanket fort. decorate it however you like; it stays that way.'],
+        ['the pink book', 'your notebook. only you can read it.'],
+        ['the tiny door', 'a secret room. three symbols are hidden around the site; find them, then enter them here in order.', tick(flag('kamy.room'), flag('kamy.room') ? 'open' : `${syms}/3 symbols`)]
+      ]],
+      ['little secrets', [
+        ['the title heart', 'on the first screen, tap the heart a few times.'],
+        ['in every game', 'the "?" in the top-left corner explains how to play.']
+      ]]
+    ];
+  }
+
+  const SPOILERS = [
+    'symbol 1: on the cassette. open the tape and look at the bottom-right corner of the cassette.',
+    'symbol 2: in the letter. scroll to the very bottom, under the signature.',
+    'symbol 3: on the snack attack victory screen, right under the note you get for beating the boss.',
+    'then tap the tiny door in the side of the hill and enter them in order: 1, 2, 3.'
+  ];
+
+  function openGuide() {
+    A.sfx('open');
+    const body = $('guide-body');
+    body.replaceChildren();
+    const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    for (const [title, items] of guideSections()) {
+      body.appendChild(mk('h3', '', title));
+      for (const [name, how, prog] of items) {
+        const row = mk('div', 'guide-item');
+        row.append(mk('b', '', name), prog && prog.text ? mk('span', prog.done ? 'done' : 'todo', prog.done ? '✓ ' + prog.text : prog.text) : mk('span'));
+        row.appendChild(mk('p', '', how));
+        body.appendChild(row);
+      }
+    }
+    // where the symbols are, only if she asks
+    const sp = mk('div'); sp.id = 'guide-spoilers';
+    const btn = mk('button', 'pixel-btn', 'show me where the symbols are');
+    btn.type = 'button';
+    btn.addEventListener('click', () => { btn.remove(); SPOILERS.forEach(t => sp.appendChild(mk('p', 'spoiler', t))); A.sfx('blip'); });
+    sp.appendChild(btn);
+    body.appendChild(sp);
+    openModal('guide-modal');
+    body.parentElement.scrollTop = 0;
+  }
+  $('guide-btn').addEventListener('click', openGuide);
+
   /* ---- Planting her own flower ----------------------------------------- */
   const P = C.planting;
   const pick = { head: 1, color: 0 };
@@ -2288,6 +2360,7 @@
     titleScreen.classList.add('gone');
     $('hud').classList.remove('hidden');
     muteBtn.classList.remove('hidden');
+    $('guide-btn').classList.remove('hidden');
     updateHud();
     setTimeout(() => garden.ready.then(() => {
       if (garden.grew) growNewFlower();

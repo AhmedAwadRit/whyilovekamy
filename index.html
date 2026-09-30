@@ -39,6 +39,17 @@
     <button id="reset-stars" class="hud-btn" type="button" hidden>reset</button>
   </div>
   <button id="mute" class="hidden" aria-label="Mute music"><img id="mute-icon" alt=""></button>
+  <button id="guide-btn" class="help-btn hidden" type="button" aria-label="Guide to everything here">?</button>
+
+  <!-- The field guide -->
+  <div class="modal" id="guide-modal" role="dialog" aria-labelledby="guide-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box guide">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="guide-title">a little guide</h2>
+      <div id="guide-body"></div>
+    </div>
+  </div>
 
   <div id="tooltip" role="tooltip"></div>
   <div id="hint" class="hidden"></div>
@@ -251,7 +262,9 @@
       <div id="game-floaters"></div>
       <button id="game-fire" type="button" hidden aria-label="Fire">fire</button>
       <div id="game-screen" hidden></div>
+      <div id="game-help-panel" class="help-panel" hidden><div class="help-card"><h3>how to play</h3><p></p><button class="pixel-btn" type="button">got it</button></div></div>
     </div>
+    <button id="game-help" class="help-btn" type="button" aria-label="How to play">?</button>
     <button id="game-close" class="close" aria-label="Close game">x</button>
   </div>
 
@@ -262,7 +275,9 @@
       <div id="mini-hud"></div>
       <div id="mini-controls" hidden></div>
       <div id="mini-screen" hidden></div>
+      <div id="mini-help-panel" class="help-panel" hidden><div class="help-card"><h3>how to play</h3><p></p><button class="pixel-btn" type="button">got it</button></div></div>
     </div>
+    <button id="mini-help" class="help-btn" type="button" aria-label="How to play">?</button>
     <button id="mini-close" class="close" aria-label="Close">x</button>
   </div>
 

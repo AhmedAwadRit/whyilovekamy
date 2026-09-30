@@ -240,7 +240,10 @@ window.PLANE = (() => {
     s.hold = type === 'down';
   }
 
-  const def = { W, H, start, update, render, pointer, key, stop: () => { s = null; } };
+  const def = {
+    W, H, start, update, render, pointer, key, stop: () => { s = null; },
+    help: 'hold anywhere on the screen (or hold space) to fly up. let go to glide down. fly through the gaps between the storm clouds. brushing the grass is fine. bumping a cloud just restarts that delivery, so try as many times as you like. there are three notes to deliver, and each place you reach opens one.'
+  };
   return {
     open: done => window.MINI.open(def, done),
     debug: { skipLeg: () => { if (s) { s.dist = LEG; s.phase = 'arrive'; s.y = 60; } }, state: () => s && { leg: s.leg, phase: s.phase, dist: Math.round(s.dist) } }

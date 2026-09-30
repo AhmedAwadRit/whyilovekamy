@@ -694,10 +694,25 @@ window.GAME = (() => {
     for (const p of run.parts) { g.fillStyle = p.c; g.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
   }
 
+  /* ---- "?" in the corner: how to play (pauses the game) ---------------- */
+  const HELP = {
+    game: `move with the arrow keys or the mouse (on a phone, drag anywhere). hold space or click to shoot (on a phone, hold the round fire button). shoot the foods you don't like. catch the foods you love (pineapple, sweet corn, sweet potato, cucumber, lychee): each one gives back a heart and a few seconds of triple shot, so don't shoot them! after ${KILLS} foods, ${G.bossName || 'the boss'} shows up. dodge the pink shots and keep firing. you have 5 hearts, and if you lose after reaching the boss you can fight just the boss again. winning unlocks the afterparty.`,
+    party: 'slide the plate left and right (arrow keys, the mouse, or drag on a phone) to catch the falling food. each catch stacks on top. if the stack leans too far one way, the top part slides off, so try to catch things right above it. you have 35 seconds; the taller the stack, the bigger its name.'
+  };
+  let helpOpen = false;
+  const helpPanel = $('game-help-panel');
+  $('game-help').addEventListener('click', () => {
+    helpPanel.querySelector('p').textContent = run && run.mode === 'party' ? HELP.party : HELP.game;
+    helpPanel.hidden = false; helpOpen = true;
+    keys.clear(); mouseFire = false; fireOff();
+    A.sfx('blip');
+  });
+  helpPanel.querySelector('button').addEventListener('click', () => { helpPanel.hidden = true; helpOpen = false; A.sfx('close'); });
+
   function frameLoop(now) {
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    update(dt);
+    if (!helpOpen) update(dt);
     render();
     raf = requestAnimationFrame(frameLoop);
   }
@@ -723,6 +738,7 @@ window.GAME = (() => {
     cancelAnimationFrame(raf);
     root.hidden = true;
     keys.clear(); drag = null; mouse = null; run = null; mouseFire = false; fireOff();
+    helpPanel.hidden = true; helpOpen = false;
     $('game-warning').hidden = true;
     $('game-floaters').replaceChildren();
     A.setGame(false);

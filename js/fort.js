@@ -155,6 +155,9 @@ window.FORT = (() => {
     }
   }
 
-  const def = { W, H, start, update, render, stop: () => { s = null; room = null; A.setOverride(null); } };
+  const def = {
+    W, H, start, update, render, stop: () => { s = null; room = null; A.setOverride(null); },
+    help: 'tap the buttons along the bottom to change the lights, the pillows, the view out the window and the music. each tap switches to the next option. it saves by itself, so the fort will be exactly how you left it next time.'
+  };
   return { open: done => window.MINI.open(def, done) };
 })();

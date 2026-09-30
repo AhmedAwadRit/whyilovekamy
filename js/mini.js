@@ -8,7 +8,17 @@ window.MINI = (() => {
   const root = $('mini'), frame = $('mini-frame'), cv = $('mini-canvas');
   const screen = $('mini-screen'), hud = $('mini-hud');
   const g = cv.getContext('2d');
-  let game = null, raf = 0, last = 0, onClose = null, W = 160, H = 224;
+  let game = null, raf = 0, last = 0, onClose = null, W = 160, H = 224, helpOpen = false;
+
+  // the "?" in the corner: how to play this game (it pauses while open)
+  const helpBtn = $('mini-help'), helpPanel = $('mini-help-panel');
+  helpBtn.addEventListener('click', () => {
+    if (!game || !game.help) return;
+    helpPanel.querySelector('p').textContent = typeof game.help === 'function' ? game.help() : game.help;
+    helpPanel.hidden = false; helpOpen = true;
+    A.sfx('blip');
+  });
+  helpPanel.querySelector('button').addEventListener('click', () => { helpPanel.hidden = true; helpOpen = false; A.sfx('close'); });
 
   function fit() {
     const s = Math.min(window.innerWidth / W, (window.innerHeight * 0.94) / H);
@@ -61,7 +71,7 @@ window.MINI = (() => {
   function loop(now) {
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    if (game) { game.update(dt); game.render(g); }
+    if (game) { if (!helpOpen) game.update(dt); game.render(g); }
     raf = requestAnimationFrame(loop);
   }
 
@@ -84,6 +94,8 @@ window.MINI = (() => {
     fit();
     setHud('');
     setControls(null);
+    helpPanel.hidden = true; helpOpen = false;
+    helpBtn.hidden = !def.help;
     screen.hidden = true;
     def.start(api);
     last = performance.now();

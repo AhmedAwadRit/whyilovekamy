@@ -195,7 +195,10 @@ window.SHADOWS = (() => {
 
   function update(dt) { if (s) s.t += dt; }
 
-  const def = { W, H, start, update, render, pointer, stop: () => { s = null; } };
+  const def = {
+    W, H, start, update, render, pointer, stop: () => { s = null; },
+    help: 'drag the cloud pieces at the bottom onto the moon. whatever part covers the moon turns into a shadow. line them up with the faint dotted outline on the moon; a piece clicks into place when it\'s close. finish the picture to watch it come alive. there are three pictures.'
+  };
   return {
     open: done => window.MINI.open(def, done),
     debug: { solve: () => { if (s && s.phase === 'play') { s.pieces.forEach(p => { p.x = MX + p.tx; p.y = MY + p.ty; p.locked = true; }); complete(); } }, state: () => s && { i: s.i, phase: s.phase } }

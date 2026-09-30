@@ -220,9 +220,9 @@ window.KAMY = {
     title: "cloud shadow theater",
     intro: "drag the clouds across the moon to make a shadow picture.",
     scenes: [
-      { title: "Coffee Time!", caption: "You and your coffee'" },
-      { title: "a little cat", caption: "[REPLACE: an inside joke that fits a cat]" },
-      { title: "the two of us", caption: "[REPLACE: a favorite memory of you two]" }
+      { title: "Coffee Time!", caption: "You and your coffees and matchas. Even if I don't want one, I'll be sure to get mine with almond milk just incase you want to try" },
+      { title: "a little cat", caption: "Even though you hate stray cats, my love for kittens will never be as my love for you" },
+      { title: "the two of us", caption: "Both of us being stupid, getting drunk, dancing to music, singing to post malone, and annoying each other" }
     ],
     doneLine: "the moon keeps all our shadows."
   },
@@ -231,7 +231,7 @@ window.KAMY = {
   fort: {
     label: "our blanket fort",
     title: "our blanket fort",
-    hint: "make it cozy. it'll stay just how you leave it."
+    hint: "Make it cozy. It'll stay just how you leave it."
   },
 
   /* ---- Star piano (tap the little music-note stars in the sky) ---------- */
@@ -253,7 +253,7 @@ window.KAMY = {
     doorLabel: "a tiny door",
     doorText: "three symbols are hidden around here. enter them in the order you find the numbers.",
     title: "our secret room",
-    note: "[REPLACE: something especially personal, just for her]",
+    note: "You will always always always be my favorite everything. I love you to the moon and back.",
     image: "", // optional, e.g. "assets/photos/secret.jpg"
     audio: ""  // optional, e.g. "assets/audio/secret.mp3"
   },
@@ -285,10 +285,10 @@ window.KAMY = {
      with her finger to develop it. Put your most special photo there. */
   filmHint: "rub it gently to develop",
   photos: [
-    { src: "assets/photos/01.jpg", caption: "[REPLACE: caption]", develop: true },
-    { src: "assets/photos/02.jpg", caption: "[REPLACE: caption]" },
-    { src: "assets/photos/03.jpg", caption: "[REPLACE: caption]" },
-    { src: "assets/photos/04.jpg", caption: "[REPLACE: caption]" }
+    { src: "assets/photos/01.jpg", caption: "Us being haters together, trying to piss our enemies off", develop: true },
+    { src: "assets/photos/02.jpg", caption: "AWWW MY SHAYLAAAA. You always did look so pretty" },
+    { src: "assets/photos/03.jpg", caption: "You always manage to make yourself look so good even when you're drunk" },
+    { src: "assets/photos/04.jpg", caption: "When you stole my phone and became my wallpaper" }
   ],
 
   /* ---- Moon: "things i never tell you" (opens in a new tab) ------------ */
