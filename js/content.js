@@ -269,6 +269,30 @@ window.KAMY = {
     doneLine: "no matter how wrong the roads get, you always find your way back to me."
   },
 
+  /* Pineapple Pinball. Each target is an inside joke: change the names and
+     lines to your own. Any moment can also play a short voice clip: record
+     yourself, put the file in assets/audio/pinball/, and set its path as
+     audio (e.g. audio: "assets/audio/pinball/jackpot.m4a"). */
+  pinball: {
+    title: "pineapple pinball",
+    intro: "pineapple bumpers, flippers, and all our inside jokes. light up all five targets for the jackpot.",
+    goal: 15000,
+    targets: [
+      { name: "dunkin", line: "dunkin run!", audio: "" },
+      { name: "sofian", line: "SOFIAN.", audio: "" },
+      { name: "matcha", line: "matcha with almond milk, just in case.", audio: "" },
+      { name: "post malone", line: "post malone karaoke!", audio: "" },
+      { name: "stray cats", line: "a stray cat. run.", audio: "" }
+    ],
+    jackpot: { line: "JACKPOT. all of them. that's my girl.", audio: "" },       // celebrating
+    frenzy: { line: "pineapple frenzy!", audio: "" },
+    drain: { lines: ["noooo", "that was the flipper's fault.", "we don't talk about that ball."], audio: "" }, // complaining
+    highScore: { line: "new best!", audio: "" },
+    goalLine: "15,000! you beat it.",
+    doneTitle: "you beat it",
+    doneLine: "pinball wizard. is there anything you can't do?"
+  },
+
   /* ---- Cloud shadow theater (tap a cloud) ------------------------------- */
   /* She slides clouds across the moon to make a shadow picture; each one
      comes alive as a tiny scene. The shapes are drawn in js/shadows.js:
