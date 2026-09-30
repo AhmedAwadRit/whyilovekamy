@@ -240,6 +240,35 @@ window.KAMY = {
     doneLine: "every airpod you've ever lost, found. please don't lose number 16."
   },
 
+  /* ---- The arcade (tap the little arcade cabinet in the field) ---------- */
+  arcade: {
+    label: "the arcade",
+    title: "the arcade",
+    intro: "pick a game. a star means you beat it."
+  },
+
+  /* Wrong Way Home: rotate roads to get from RIT to Dunkin to home */
+  wrongway: {
+    title: "wrong way home",
+    intro: "get the car from RIT to dunkin, then home. tap the roads to turn them before it leaves.",
+    goLabel: "leave now",
+    // one line after each day (the last day shows doneLine instead)
+    days: [
+      "made it. dunkin secured.",
+      "home. you didn't even complain about traffic.",
+      "one-way streets can't stop you.",
+      "that detour was unnecessary. we made it anyway."
+    ],
+    fails: {
+      gap: "the road just... ended.",
+      oneway: "that was a one-way street. wrong way.",
+      dunkin: "you drove right past dunkin?? turn around.",
+      closed: "road closed. told you."
+    },
+    doneTitle: "home, every time.",
+    doneLine: "no matter how wrong the roads get, you always find your way back to me."
+  },
+
   /* ---- Cloud shadow theater (tap a cloud) ------------------------------- */
   /* She slides clouds across the moon to make a shadow picture; each one
      comes alive as a tiny scene. The shapes are drawn in js/shadows.js:

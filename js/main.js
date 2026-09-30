@@ -89,7 +89,7 @@
   const ctx = canvas.getContext('2d');
   let W, H, scale, w, h, groundY;
   let bg, fg, moonSprite, moonGlow = [], cloudSprite;
-  let moon, rocket, rocketOutline, wishStar, noteStar, airpod, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
+  let moon, rocket, rocketOutline, wishStar, noteStar, airpod, arcade, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
   let fireflies = [], clouds = [], particles = [], mound;
 
   const garden = registerVisit();
@@ -149,6 +149,8 @@
     const fieldH = h - groundY;
     const iy = groundY + Math.round(fieldH * 0.42);
     // another lost airpod, lying in the grass (the airpod hunt)
+    // the little arcade cabinet, standing at the edge of the field
+    arcade = { kind: 'arcade', x: Math.round(w * 0.82), y: groundY + 7 };
     airpod = { kind: 'airpod', x: Math.round(w * 0.6), y: Math.min(h - 6, groundY + Math.round(fieldH * 0.78)) };
     const defs = [
       { id: 'headphones', sprite: S.headphones, fx: 0.11, dy: -4, label: 'our playlist', action: openPlaylist },
@@ -678,6 +680,7 @@
     });
 
     drawAirpod();
+    drawArcade();
     drawFinale();
     for (const p of particles) drawParticle(p);
   }
@@ -695,6 +698,15 @@
     }
   }
   let airpodOutline = null;
+
+  // the arcade cabinet: its screen flickers between two colors
+  let arcadeOutline = null;
+  function drawArcade() {
+    const cab = window.ARCADE.cabinet, x = arcade.x - (cab[0].width >> 1), y = arcade.y - cab[0].height;
+    ctx.fillStyle = 'rgba(10,8,24,.45)'; ctx.fillRect(x, arcade.y, cab[0].width, 1);
+    if (state.hover === arcade) ctx.drawImage(arcadeOutline || (arcadeOutline = S.outline(cab[0], '#fff3d6')), x - 1, y - 1);
+    else ctx.drawImage(cab[Math.floor(state.t * 1.5) % 2], x, y);
+  }
 
   function ring(cx, cy, r, col) {
     ctx.fillStyle = col;
@@ -885,6 +897,8 @@
     if (p.x >= mound.friendsX - 1 && p.x <= mound.friendsX + 16 && p.y >= mound.friendsTop - 3 && p.y <= mound.friendsTop + 9) {
       return { kind: 'friends', x: mound.friendsX + 7, y: mound.friendsTop };
     }
+    // the arcade cabinet
+    if (p.x >= arcade.x - 6 && p.x <= arcade.x + 6 && p.y >= arcade.y - 16 && p.y <= arcade.y + 2) return { ...arcade, y: arcade.y - 14 };
     // the airpod in the grass
     if (Math.hypot(p.x - airpod.x, p.y - airpod.y) <= Math.max(5, 18 / scale)) return airpod;
     // the lost firefly
@@ -921,6 +935,7 @@
     if (t.kind === 'friends') return 'the two of you';
     if (t.kind === 'firefly') return (C.fireflies && C.fireflies.label) || 'a lost firefly';
     if (t.kind === 'airpod') return (C.airpods && C.airpods.label) || 'an airpod?';
+    if (t.kind === 'arcade') return (C.arcade && C.arcade.label) || 'the arcade';
     if (t.kind === 'shooting' && t.victory) return 'catch it!';
     return '';
   }
@@ -992,6 +1007,7 @@
     if (t.kind === 'cloud') { A.sfx('open'); return window.SHADOWS.open(res => { if (res && res.complete) store.set('kamy.shadows.done', true); }); }
     if (t.kind === 'friends') return startTickle();
     if (t.kind === 'firefly') return openFireflies();
+    if (t.kind === 'arcade') { A.sfx('open'); return window.ARCADE.open(); }
     if (t.kind === 'airpod') {
       A.sfx('open');
       return window.AIRPODS.open(res => {
@@ -2139,6 +2155,7 @@
         ['the camera', 'our photos. they start blurry: tap one and rub it gently to develop it. "reset photos" makes them blurry again.', tick(dev >= photos, `${dev}/${photos}`)],
         ['the seed packet', 'plant your own flower with a note tucked inside. it stays in the field for good.'],
         ['the brightest firefly', 'a lost one. tap it and draw glowing paths to lead the fireflies home.', tick(flag('kamy.fireflies.done'), flag('kamy.fireflies.done') ? 'done' : '')],
+        ['the arcade cabinet', 'little games. a star next to one means you beat it.', tick(false, `${window.ARCADE.GAMES.filter(g => window.ARCADE.done(g[0])).length} beaten`)],
         ['the airpod in the grass', `you lost another one. tap it: all ${window.AIRPODS.TOTAL} of the ones you've lost are hiding in three messy piles.`, tick(flag('kamy.airpods.done'), flag('kamy.airpods.done') ? 'all found' : '')]
       ]],
       ['the hill', [
@@ -2418,6 +2435,7 @@
     friends: () => ({ x: mound.friendsX, top: mound.friendsTop, peakX: mound.peakX }),
     firefly: () => ({ x: fireflies[0].x, y: fireflies[0].y }),
     airpod: () => airpod,
+    arcade: () => arcade,
     finale: () => fireflyFinale(),
     book: () => bookPos(),
     heart: () => heartPos(),
