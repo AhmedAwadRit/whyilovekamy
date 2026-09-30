@@ -89,7 +89,7 @@
   const ctx = canvas.getContext('2d');
   let W, H, scale, w, h, groundY;
   let bg, fg, moonSprite, moonGlow = [], cloudSprite;
-  let moon, rocket, rocketOutline, wishStar, noteStar, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
+  let moon, rocket, rocketOutline, wishStar, noteStar, airpod, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
   let fireflies = [], clouds = [], particles = [], mound;
 
   const garden = registerVisit();
@@ -148,6 +148,8 @@
     // Items on the grass
     const fieldH = h - groundY;
     const iy = groundY + Math.round(fieldH * 0.42);
+    // another lost airpod, lying in the grass (the airpod hunt)
+    airpod = { kind: 'airpod', x: Math.round(w * 0.6), y: Math.min(h - 6, groundY + Math.round(fieldH * 0.78)) };
     const defs = [
       { id: 'headphones', sprite: S.headphones, fx: 0.11, dy: -4, label: 'our playlist', action: openPlaylist },
       { id: 'tape', sprite: S.tape, fx: 0.3, dy: 7, label: C.voiceNote.title, action: openTape },
@@ -675,9 +677,24 @@
       ctx.fillRect(x, y, 1, 1);
     });
 
+    drawAirpod();
     drawFinale();
     for (const p of particles) drawParticle(p);
   }
+
+  // the airpod in the grass, with a little glint every few seconds
+  function drawAirpod() {
+    const { x, y } = airpod, pod = window.AIRPODS.tiny;
+    if (state.hover === airpod) ctx.drawImage(airpodOutline || (airpodOutline = S.outline(pod, '#fff3d6')), x - 2, y - 3);
+    else ctx.drawImage(pod, x - 1, y - 2);
+    const ph = state.t % 4;
+    if (ph < 0.3) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + 2, y - 3, 1, 1);
+      if (ph > 0.1 && ph < 0.2) { ctx.fillRect(x + 1, y - 3, 3, 1); ctx.fillRect(x + 2, y - 4, 1, 3); }
+    }
+  }
+  let airpodOutline = null;
 
   function ring(cx, cy, r, col) {
     ctx.fillStyle = col;
@@ -868,6 +885,8 @@
     if (p.x >= mound.friendsX - 1 && p.x <= mound.friendsX + 16 && p.y >= mound.friendsTop - 3 && p.y <= mound.friendsTop + 9) {
       return { kind: 'friends', x: mound.friendsX + 7, y: mound.friendsTop };
     }
+    // the airpod in the grass
+    if (Math.hypot(p.x - airpod.x, p.y - airpod.y) <= Math.max(5, 18 / scale)) return airpod;
     // the lost firefly
     const ff = fireflies[0];
     if (ff && ff.x != null && Math.hypot(p.x - ff.x, p.y - ff.y) <= Math.max(7, 26 / scale)) return { kind: 'firefly', x: ff.x, y: ff.y };
@@ -901,6 +920,7 @@
     if (t.kind === 'cloud') return (C.shadows && C.shadows.label) || 'shadow theater';
     if (t.kind === 'friends') return 'the two of you';
     if (t.kind === 'firefly') return (C.fireflies && C.fireflies.label) || 'a lost firefly';
+    if (t.kind === 'airpod') return (C.airpods && C.airpods.label) || 'an airpod?';
     if (t.kind === 'shooting' && t.victory) return 'catch it!';
     return '';
   }
@@ -972,6 +992,14 @@
     if (t.kind === 'cloud') { A.sfx('open'); return window.SHADOWS.open(res => { if (res && res.complete) store.set('kamy.shadows.done', true); }); }
     if (t.kind === 'friends') return startTickle();
     if (t.kind === 'firefly') return openFireflies();
+    if (t.kind === 'airpod') {
+      A.sfx('open');
+      return window.AIRPODS.open(res => {
+        if (!res || !res.complete) return;
+        store.set('kamy.airpods.done', true);
+        burst(airpod.x, airpod.y, ['#ffffff', '#fff3d6', '#b8bcd0'], 18, 30);
+      });
+    }
     if (t.kind === 'item') { A.sfx('open'); t.action(); }
     if (t.planted) { A.sfx('star'); openDialog(`planted ${fmtDate(t.date)}`, t.note); }
     if (t.kind === 'ship') {
@@ -2110,7 +2138,8 @@
         ['the envelope', 'a letter. at the bottom, fold it into a paper plane and fly three little notes to three places.', tick(flag('kamy.plane.done'), flag('kamy.plane.done') ? 'done' : '')],
         ['the camera', 'our photos. they start blurry: tap one and rub it gently to develop it. "reset photos" makes them blurry again.', tick(dev >= photos, `${dev}/${photos}`)],
         ['the seed packet', 'plant your own flower with a note tucked inside. it stays in the field for good.'],
-        ['the brightest firefly', 'a lost one. tap it and draw glowing paths to lead the fireflies home.', tick(flag('kamy.fireflies.done'), flag('kamy.fireflies.done') ? 'done' : '')]
+        ['the brightest firefly', 'a lost one. tap it and draw glowing paths to lead the fireflies home.', tick(flag('kamy.fireflies.done'), flag('kamy.fireflies.done') ? 'done' : '')],
+        ['the airpod in the grass', `you lost another one. tap it: all ${window.AIRPODS.TOTAL} of the ones you've lost are hiding in three messy piles.`, tick(flag('kamy.airpods.done'), flag('kamy.airpods.done') ? 'all found' : '')]
       ]],
       ['the hill', [
         ['the two of us', 'tap them and see what happens. and if you stay in the field a while, watch them.'],
@@ -2388,6 +2417,7 @@
     moment: at => { state.calm = at; state.moment.next = 0; },
     friends: () => ({ x: mound.friendsX, top: mound.friendsTop, peakX: mound.peakX }),
     firefly: () => ({ x: fireflies[0].x, y: fireflies[0].y }),
+    airpod: () => airpod,
     finale: () => fireflyFinale(),
     book: () => bookPos(),
     heart: () => heartPos(),

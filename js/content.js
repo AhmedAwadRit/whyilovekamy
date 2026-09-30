@@ -211,6 +211,35 @@ window.KAMY = {
     finale: "<3"
   },
 
+  /* ---- The airpod hunt (tap the airpod lying in the grass) -------------- */
+  /* Three messy piles; the counts must add up to how many she's lost. */
+  airpods: {
+    label: "is that... an airpod?",
+    title: "the airpod hunt",
+    intro: "you've lost 15 airpods. i found every single one. they're hiding in here somewhere.",
+    rooms: [
+      { name: "your bed", count: 4, line: "let's start with your bed. 4 are in there." },
+      { name: "your backpack", count: 5, line: "now your backpack. 5 more somewhere in there." },
+      { name: "the car", count: 6, line: "and the last 6 are in the car. how." }
+    ],
+    // a little line when she reaches certain counts (optional)
+    found: {
+      1: "one down.",
+      8: "halfway there.",
+      14: "one more. just one."
+    },
+    // what shows up when she taps something that isn't an airpod
+    decoys: {
+      tictac: "a tic tac. not an airpod.",
+      mint: "a mint. close, but no.",
+      qtip: "a q-tip. nice try.",
+      bean: "a bean. ew. you hate beans."
+    },
+    hint: "hmm. something's under there...",
+    doneTitle: "15/15",
+    doneLine: "every airpod you've ever lost, found. please don't lose number 16."
+  },
+
   /* ---- Cloud shadow theater (tap a cloud) ------------------------------- */
   /* She slides clouds across the moon to make a shadow picture; each one
      comes alive as a tiny scene. The shapes are drawn in js/shadows.js:
