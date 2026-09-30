@@ -95,7 +95,7 @@ window.KAMY = {
     winTitle: "you win!",
     winSubtitle: "sofian has been defeated.",
     winNote: "you were always so strong, and im so proud of you for overcoming the challenges you had to face",
-    loseLine: "the vegetables won this round.",
+    loseLine: "Come on you got this! Try again!",
     caughtLine: "yum, {name}!",        // when she catches food she likes
     shotLikedLine: "not the {name}!",  // when she shoots food she likes
     // after she wins, a pineapple-coloured shooting star crosses the field
@@ -308,33 +308,31 @@ window.KAMY = {
   secretsOutro: "okay. now you know all of them.",
 
   /* ---- A call from the moon (end of "things i never tell you") --------- */
-  /* Record short voice clips and save them in assets/audio/call/. Each part
-     plays your clip (the text shows as subtitles, and is used on its own if
-     the clip is missing), then she picks what to say. A part with no choices
-     ends the call. The button only appears once the texts are written. */
+  /* Your voice clips live in assets/audio/call/. Each part plays its clip,
+     then either goes straight on ("then") or lets her pick what to say
+     ("choices"). A part with neither ends the call.
+     text = optional subtitles: type what you say in that clip to show it. */
   call: {
     button: "the moon is calling...",
     caller: "the moon",
     start: "hello",
     parts: {
-      hello: {
-        audio: "assets/audio/call/hello.mp3",
-        text: "[REPLACE: hey... it's me. are you still up?]",
+      hello: { audio: "assets/audio/call/hello.m4a", text: "", then: "areyouup" },
+      areyouup: {
+        audio: "assets/audio/call/are-you-up.m4a", text: "",
         choices: [ { say: "i'm up", next: "up" }, { say: "i was asleep...", next: "asleep" } ]
       },
       up: {
-        audio: "assets/audio/call/up.mp3",
-        text: "[REPLACE: good. i just wanted to hear your voice. did you read everything?]",
+        audio: "assets/audio/call/im-up.m4a", text: "",
         choices: [ { say: "every word", next: "every" }, { say: "why'd you never send them?", next: "why" } ]
       },
       asleep: {
-        audio: "assets/audio/call/asleep.mp3",
-        text: "[REPLACE: sorry sleepyhead. i'll be quick. i just miss you.]",
-        choices: [ { say: "i miss you too", next: "missyou" } ]
+        audio: "assets/audio/call/i-miss-you.m4a", text: "",
+        choices: [ { say: "i miss you too", next: "goodnight" } ]
       },
-      every: { audio: "assets/audio/call/every.mp3", text: "[REPLACE: then you know. goodnight, kamy.]" },
-      why: { audio: "assets/audio/call/why.mp3", text: "[REPLACE: because some things are easier to say on a website at 2am. goodnight.]" },
-      missyou: { audio: "assets/audio/call/missyou.mp3", text: "[REPLACE: go back to sleep. i'll be here tomorrow. goodnight.]" }
+      every: { audio: "assets/audio/call/every.m4a", text: "" },
+      why: { audio: "assets/audio/call/why.m4a", text: "" },
+      goodnight: { audio: "assets/audio/call/goodnight.m4a", text: "" }
     }
   }
 };

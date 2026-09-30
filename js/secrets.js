@@ -127,8 +127,8 @@
   const CALL = C.call || {};
   const real = s => (typeof s === 'string' && !s.includes('[REPLACE') ? s : '');
   const isLocal = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-  // on the live site the call only appears once you've written its texts
-  const callReady = () => !!(CALL.parts && CALL.start && (isLocal || Object.values(CALL.parts).some(p => real(p.text))));
+  // on the live site the call only appears once it has recordings or written lines
+  const callReady = () => !!(CALL.parts && CALL.start && (isLocal || Object.values(CALL.parts).some(p => real(p.text) || p.audio)));
   const shown = s => real(s) || (isLocal ? s : '');
 
   let ac = null, ringTimer = null, clip = null, callT0 = 0, clock = null;
@@ -169,9 +169,53 @@
     $('call-btn').textContent = 'call back';
   });
 
+  // one player for every clip, unlocked by her tap on "accept" (phones only
+  // allow sound that starts from a tap; after that the same player can keep going)
+  const clipEl = new Audio();
+  clipEl.preload = 'auto';
+
+  /* Your voice goes through a phone line: only the middle of the voice gets
+     through (like a real call), a little grit and squash, and a faint hiss. */
+  let line = null;
+  function phoneLine() {
+    if (line) return line;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      const src = ac.createMediaElementSource(clipEl);
+      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 350; hp.Q.value = 0.8;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3300; lp.Q.value = 0.9;
+      const mid = ac.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 1600; mid.Q.value = 0.9; mid.gain.value = 5;
+      const drive = ac.createWaveShaper();
+      const curve = new Float32Array(1024);
+      for (let i = 0; i < 1024; i++) { const x = i / 1023 * 2 - 1; curve[i] = Math.tanh(2 * x) / Math.tanh(2); }
+      drive.curve = curve;
+      const comp = ac.createDynamicsCompressor(); comp.threshold.value = -26; comp.ratio.value = 4;
+      const out = ac.createGain(); out.gain.value = 1.15;
+      src.connect(hp); hp.connect(lp); lp.connect(mid); mid.connect(drive); drive.connect(comp); comp.connect(out); out.connect(ac.destination);
+      // faint line hiss
+      const len = ac.sampleRate * 2, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const hiss = ac.createBufferSource(); hiss.buffer = buf; hiss.loop = true;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2200; bp.Q.value = 0.6;
+      const hissGain = ac.createGain(); hissGain.gain.value = 0;
+      hiss.connect(bp); bp.connect(hissGain); hissGain.connect(ac.destination); hiss.start();
+      line = { hiss: on => hissGain.gain.setTargetAtTime(on ? 0.006 : 0, ac.currentTime, 0.2) };
+    } catch (e) {
+      line = { hiss() {} }; // no Web Audio: the voice just plays normally
+    }
+    return line;
+  }
+
   $('call-accept').addEventListener('click', () => {
     clearInterval(ringTimer);
     $('call-actions').hidden = true;
+    phoneLine().hiss(true);
+    const first = CALL.parts[CALL.start];
+    if (first && first.audio) {
+      clipEl.src = first.audio;
+      clipEl.play().then(() => { clipEl.pause(); clipEl.currentTime = 0; }).catch(() => {});
+    }
     callT0 = Date.now();
     const tick = () => { const s = Math.floor((Date.now() - callT0) / 1000); $('call-status').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
     tick(); clock = setInterval(tick, 1000);
@@ -199,12 +243,17 @@
     };
     // type the subtitle at the pace of the clip (or a gentle speaking pace without one)
     const typeAt = ms => { let i = 0; clearInterval(typing); typing = setInterval(() => { sub.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typing); }, ms); };
-    clip = part.audio ? new Audio(part.audio) : null;
+    clip = part.audio ? clipEl : null;
     if (clip) {
-      clip.addEventListener('loadedmetadata', () => typeAt(Math.max(25, (clip.duration * 1000 * 0.85) / Math.max(1, text.length))));
-      clip.addEventListener('ended', finish);
-      clip.addEventListener('error', () => { clip = null; typeAt(55); setTimeout(finish, text.length * 55 + 900); });
-      clip.play().catch(() => { typeAt(55); setTimeout(finish, text.length * 55 + 900); });
+      const paced = () => typeAt(Math.max(25, (clipEl.duration * 1000 * 0.85) / Math.max(1, text.length)));
+      const noClip = () => { clip = null; typeAt(55); setTimeout(finish, text.length * 55 + 900); };
+      if (clipEl.src !== new URL(part.audio, location.href).href) clipEl.src = part.audio;
+      else clipEl.currentTime = 0;
+      clipEl.onloadedmetadata = paced;
+      clipEl.onended = finish;
+      clipEl.onerror = noClip;
+      if (clipEl.readyState >= 1) paced();
+      clipEl.play().catch(noClip);
     } else {
       typeAt(55);
       setTimeout(finish, text.length * 55 + 900);
@@ -213,6 +262,7 @@
 
   function offerChoices(part) {
     const box = $('call-choices');
+    if (part.then) { setTimeout(() => speak(part.then), 350); return; } // keeps talking
     if (!part.choices || !part.choices.length) {
       const b = document.createElement('button');
       b.className = 'pixel-btn'; b.type = 'button'; b.textContent = 'hang up';
@@ -234,7 +284,10 @@
   }
 
   function hangUp() {
-    if (clip) { clip.pause(); clip = null; }
+    clipEl.onended = clipEl.onerror = clipEl.onloadedmetadata = null;
+    clipEl.pause();
+    clip = null;
+    if (line) line.hiss(false);
     clearInterval(clock);
     beep(440, 0, 0.1, 0.04); beep(330, 0.12, 0.15, 0.04);
     $('call-status').textContent = 'call ended · ' + $('call-status').textContent;

@@ -730,7 +730,7 @@
     const trail = s.victory
       ? ['#fff7c2', '#ffe066', '#ffd23f', '#f0bc2e', '#d9a02a', '#b88420', '#8a6218', '#5c4212', '#3a2a0c']
       : ['#ffffff', '#fff3d6', '#d6d9ff', '#9aa0d8', '#6a6fa8', '#4b4f93', '#2c2f66'];
-    const gap = s.victory ? 0.05 : 0.018;
+    const gap = s.victory ? 0.05 : 0.045; // keeps the tail long now that it's slower
     for (let i = trail.length - 1; i >= 0; i--) {
       ctx.fillStyle = trail[i];
       const tx = Math.round(s.x - s.vx * i * gap), ty = Math.round(s.y - s.vy * i * gap);
@@ -791,7 +791,8 @@
         kind: 'shooting',
         x: w * (dir < 0 ? 0.55 + Math.random() * 0.4 : 0.05 + Math.random() * 0.4),
         y: 6 + Math.random() * groundY * 0.3,
-        vx: dir * (90 + Math.random() * 40), vy: 45, age: 0, life: 1.1
+        // slow enough to catch with a mouse: about 3 seconds across
+        vx: dir * (42 + Math.random() * 14), vy: 16, age: 0, life: 3.3
       };
     }
 
@@ -844,7 +845,7 @@
       if (Math.abs(p.x - f.x) <= fr && p.y >= f.y - f.ay - 3 && p.y <= f.y + 2) return f;
     }
     const s = state.shooting;
-    if (s && Math.hypot(p.x - s.x, p.y - s.y) < Math.max(10, 30 / scale)) return s;
+    if (s && Math.hypot(p.x - s.x, p.y - s.y) < Math.max(12, 44 / scale)) return s;
     if (Math.hypot(p.x - moon.x, p.y - moon.y) <= moon.r + 3) return moon;
     if (Math.hypot(p.x - rocket.x, p.y - rocket.y) <= Math.max(8, 22 / scale)) return rocket;
     if (wishes.length && Math.hypot(p.x - wishStar.x, p.y - wishStar.y) <= Math.max(5, 20 / scale)) return wishStar;
