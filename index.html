@@ -64,6 +64,7 @@
         <div id="letter-body"></div>
         <p class="signoff" id="letter-signoff"></p>
         <p class="signature" id="letter-signature"></p>
+        <button class="secret-sym" id="sym-flower" type="button" aria-label="a tiny symbol"><img alt=""><b></b></button>
         <button id="letter-plane" class="pixel-btn" type="button"></button>
       </div>
     </div>
@@ -76,6 +77,32 @@
       <button class="close" data-close aria-label="Close">x</button>
       <h2 id="playlist-title"></h2>
       <div id="playlist-body"></div>
+    </div>
+  </div>
+
+  <!-- The tiny door: enter the three symbols -->
+  <div class="modal" id="door-modal" role="dialog" aria-labelledby="door-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box doorbox">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="door-title"></h2>
+      <p id="door-text"></p>
+      <div id="door-slots"></div>
+      <div id="door-keys"></div>
+      <p id="door-msg"></p>
+    </div>
+  </div>
+
+  <!-- The secret room -->
+  <div class="modal" id="room-modal" role="dialog" aria-labelledby="room-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel room">
+      <button class="close" data-close aria-label="Close">x</button>
+      <canvas id="room-canvas" width="120" height="64"></canvas>
+      <h2 id="room-title"></h2>
+      <img id="room-image" alt="" hidden>
+      <p id="room-note"></p>
+      <button id="room-play" class="pixel-btn" type="button" hidden>play</button>
     </div>
   </div>
 
@@ -150,6 +177,7 @@
       <div class="cassette">
         <canvas id="tape-canvas" width="64" height="40"></canvas>
         <span id="tape-label"></span>
+        <button class="secret-sym" id="sym-moon" type="button" aria-label="a tiny symbol"><img alt=""><b></b></button>
       </div>
       <div class="tape-progress"><i id="tape-bar"></i></div>
       <div class="tape-row">
@@ -230,6 +258,7 @@
     <div id="mini-frame">
       <canvas id="mini-canvas"></canvas>
       <div id="mini-hud"></div>
+      <div id="mini-controls" hidden></div>
       <div id="mini-screen" hidden></div>
     </div>
     <button id="mini-close" class="close" aria-label="Close">x</button>
@@ -262,6 +291,9 @@
   <script src="js/mini.js"></script>
   <script src="js/plane.js"></script>
   <script src="js/fireflies.js"></script>
+  <script src="js/piano.js"></script>
+  <script src="js/fort.js"></script>
+  <script src="js/shadows.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

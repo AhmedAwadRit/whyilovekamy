@@ -29,6 +29,19 @@ window.MINI = (() => {
   function hideScreen() { screen.hidden = true; }
   function setHud(text) { hud.textContent = text || ''; }
 
+  // a row of buttons along the bottom (for games that need them while playing)
+  const controls = $('mini-controls');
+  function setControls(list) {
+    controls.replaceChildren(...(list || []).map(({ label, onClick, id }) => {
+      const b = el('button', 'pixel-btn', label);
+      b.type = 'button';
+      if (id) b.dataset.id = id;
+      b.addEventListener('click', e => { e.stopPropagation(); onClick(b); });
+      return b;
+    }));
+    controls.hidden = !(list && list.length);
+  }
+
   // types text into an element, a few characters at a time
   function typeInto(node, text, ms = 34) {
     let i = 0;
@@ -53,7 +66,7 @@ window.MINI = (() => {
   }
 
   const api = {
-    g, el, button, show, showSoft, hideScreen, setHud, typeInto,
+    g, el, button, show, showSoft, hideScreen, setHud, setControls, typeInto,
     get W() { return W; }, get H() { return H; },
     screenOpen: () => !screen.hidden,
     sfx: n => A.sfx(n),
@@ -70,6 +83,7 @@ window.MINI = (() => {
     root.hidden = false;
     fit();
     setHud('');
+    setControls(null);
     screen.hidden = true;
     def.start(api);
     last = performance.now();

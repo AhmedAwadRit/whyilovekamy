@@ -157,6 +157,22 @@ window.SPRITES = (() => {
     right: make(FRIENDS.map(r => r.slice(7)), FRIEND_PAL)
   };
 
+  // the secret-room symbols (three are hidden; the rest are decoys on the keypad)
+  const SYM_ROWS = {
+    moon: ['..ooo..', '.oo....', 'oo.....', 'oo.....', 'oo.....', '.oo....', '..ooo..'],
+    flower: ['..o.o..', '.ooooo.', 'oooyooo', '.ooooo.', '..o.o..', '...o...', '..oo...'],
+    crown: ['o..o..o', 'oo.o.oo', 'ooooooo', 'ooooooo', '.ooooo.'],
+    star: ['...o...', '..ooo..', 'ooooooo', '.ooooo.', '..ooo..', '.oo.oo.', 'oo...oo'],
+    heart: ['.oo.oo.', 'ooooooo', 'ooooooo', '.ooooo.', '..ooo..', '...o...'],
+    key: ['.ooo...', 'o...o..', '.ooo...', '..o....', '..oo...', '..o....', '..oo...'],
+    drop: ['...o...', '..ooo..', '.ooooo.', 'ooooooo', 'ooooooo', '.ooooo.', '..ooo..'],
+    note: ['...oooo', '...o..o', '...o..o', '...o..o', '.ooo.oo', 'oooo.oo', '.oo....'],
+    leaf: ['.....oo', '...oooo', '..ooooo', '.ooooo.', '.oooo..', 'o.oo...', 'o......']
+  };
+  const symbols = {};
+  for (const [id, rows] of Object.entries(SYM_ROWS)) symbols[id] = make(rows, { o: '#ffe7a0', y: '#ff9ec4' });
+  const door = make(['.ooo.', 'ohhho', 'ohhho', 'ohhko', 'ohhho', 'ohhho', 'ooooo'], { o: '#2a1e18', h: '#7a4f34', k: '#ffd87a' });
+
   // her notebook, lying on the grass next to them
   const book = make(['pppppp', 'pwwwww', 'pppppp', '..r...'], { p: '#ff9ec4', w: '#fff4e2', r: '#ff5c8a' });
   // the little "angry" mark
@@ -257,7 +273,7 @@ window.SPRITES = (() => {
 
   return {
     canvas, make, outline, flower,
-    headphones, envelope, camera, seeds, tape, friends, pineappleTiny, book, anger, heart, smallHeart,
+    headphones, envelope, camera, seeds, tape, friends, pineappleTiny, book, anger, symbols, door, heart, smallHeart,
     speakerOn, speakerOff, star, starRead, starLocked,
     HEAD_COUNT: HEADS.length, COLOR_COUNT: COLORS.length,
     COLORS

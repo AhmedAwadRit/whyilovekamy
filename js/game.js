@@ -180,10 +180,21 @@ window.GAME = (() => {
     A.sfx('win');
     try { localStorage.setItem('kamy.game.won', '1'); } catch (e) {}
     const note = el('p', 'win-note', '');
+    // a secret symbol, tucked into the victory screen
+    const sym = el('button', 'secret-sym');
+    if (window.SECRET) {
+      sym.type = 'button'; sym.setAttribute('aria-label', 'a tiny symbol');
+      const im = new Image(); im.src = window.SECRET.img('crown');
+      const num = el('b', '', window.SECRET.has('crown') ? '3' : '');
+      sym.append(im, num);
+      if (window.SECRET.has('crown')) sym.classList.add('found');
+      sym.addEventListener('click', e => { e.stopPropagation(); window.SECRET.found('crown'); num.textContent = '3'; sym.classList.add('found'); });
+    }
     show([
       el('h3', 'game-title', G.winTitle || 'you win!'),
       el('p', 'line', G.winSubtitle || ''),
       note,
+      sym,
       button(G.afterpartyButton || 'afterparty', partyIntro),
       button('play again', () => begin(false)),
       button('back to the stars', close)

@@ -89,7 +89,7 @@
   const ctx = canvas.getContext('2d');
   let W, H, scale, w, h, groundY;
   let bg, fg, moonSprite, moonGlow = [], cloudSprite;
-  let moon, rocket, rocketOutline, wishStar, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
+  let moon, rocket, rocketOutline, wishStar, noteStar, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
   let fireflies = [], clouds = [], particles = [], mound;
 
   const garden = registerVisit();
@@ -143,6 +143,7 @@
     moon = { kind: 'moon', x: Math.round(w * 0.78), y: Math.round(Math.max(R + 10, groundY * 0.24)), r: R };
     rocket = { kind: 'ship', x: Math.round(w * 0.13), y: Math.round(groundY * 0.52) };
     wishStar = { kind: 'wish', x: Math.round(w * 0.9), y: Math.round(groundY * 0.6) };
+    noteStar = { kind: 'piano', x: Math.round(w * 0.62), y: Math.round(Math.max(12, groundY * 0.1)) };
 
     // Items on the grass
     const fieldH = h - groundY;
@@ -177,6 +178,7 @@
       if (Math.hypot(x - moon.x, y - moon.y) < moon.r + 14) continue;
       if (Math.hypot(x - rocket.x, y - rocket.y) < 16) continue;
       if (Math.hypot(x - wishStar.x, y - wishStar.y) < 14) continue;
+      if (Math.hypot(x - noteStar.x, y - noteStar.y) < 14) continue;
       if (x * scale < 190 && y * scale < 44) continue; // keep clear of the HUD
       if ((w - x) * scale < 64 && y * scale < 60) continue; // and the mute button
       if (stars.some(s => Math.hypot(s.x - x, s.y - y) < minD)) continue;
@@ -584,6 +586,7 @@
 
     drawConstellation();
     drawInitial();
+    drawNoteStars();
 
     // reason stars
     for (const s of stars) {
@@ -622,12 +625,12 @@
     drawSnackTower();
     drawWishStar();
 
-    // little heart floating over the two friends
-    const hp = state.heartT;
-    if (hp < 2.4) {
-      const hx = mound.peakX - 1, hy = mound.friendsTop - 5 - Math.floor(hp * 3);
-      if (hp < 2 || Math.floor(hp * 10) % 2 === 0) ctx.drawImage(S.smallHeart, hx, hy);
-    }
+    drawDoor();
+
+    // the little heart hovering over the two of them (it opens the blanket fort)
+    const hb = heartPos(), beat = state.heartT < 0.8 && Math.floor(state.heartT * 8) % 2 === 0;
+    if (state.hover && state.hover.kind === 'fortheart') { ctx.fillStyle = '#fff3d6'; ctx.fillRect(hb.x - 1, hb.y - 1, 5, 5); }
+    ctx.drawImage(S.smallHeart, hb.x, hb.y - (beat ? 1 : 0));
 
     // flowers and items, back to front
     const g = state.growing;
@@ -852,6 +855,14 @@
     // her notebook, on the grass beside them
     const bk = bookPos();
     if (p.x >= bk.x - 3 && p.x <= bk.x + 9 && p.y >= bk.y - 4 && p.y <= bk.y + 6) return { kind: 'book', x: bk.x + 3, y: bk.y };
+    // the heart above them (blanket fort)
+    const hb = heartPos();
+    if (Math.hypot(p.x - (hb.x + 1), p.y - (hb.y + 1)) <= Math.max(4, 16 / scale)) return { kind: 'fortheart', x: hb.x + 1, y: hb.y };
+    // the tiny door in the hill (secret room)
+    const dp = doorPos();
+    if (p.x >= dp.x - 2 && p.x <= dp.x + 7 && p.y >= dp.y - 2 && p.y <= dp.y + 8) return { kind: 'door', x: dp.x + 2, y: dp.y };
+    // the music-note stars (star piano)
+    if (Math.hypot(p.x - noteStar.x, p.y - noteStar.y) <= Math.max(6, 22 / scale)) return noteStar;
     // the two of them: a little tickle fight
     if (p.x >= mound.friendsX - 1 && p.x <= mound.friendsX + 16 && p.y >= mound.friendsTop - 3 && p.y <= mound.friendsTop + 9) {
       return { kind: 'friends', x: mound.friendsX + 7, y: mound.friendsTop };
@@ -865,7 +876,12 @@
       const d = Math.hypot(p.x - st.x, p.y - st.y);
       if (d < bd) { bd = d; best = st; }
     }
-    return best;
+    if (best) return best;
+    // the drifting clouds (shadow theater)
+    for (const c of clouds) {
+      if (p.x >= c.x + 2 && p.x <= c.x + cloudSprite.width - 2 && p.y >= c.y - 1 && p.y <= c.y + cloudSprite.height) return { kind: 'cloud', x: c.x + cloudSprite.width / 2, y: c.y };
+    }
+    return null;
   }
 
   function labelFor(t) {
@@ -878,6 +894,10 @@
     if (t.kind === 'wish') return WI.starTitle;
     if (t.kind === 'initial') return 'psst';
     if (t.kind === 'book') return (C.notebook && C.notebook.label) || 'a notebook';
+    if (t.kind === 'fortheart') return (C.fort && C.fort.label) || 'our blanket fort';
+    if (t.kind === 'door') return (C.secretRoom && C.secretRoom.doorLabel) || 'a tiny door';
+    if (t.kind === 'piano') return (C.piano && C.piano.label) || 'star piano';
+    if (t.kind === 'cloud') return (C.shadows && C.shadows.label) || 'shadow theater';
     if (t.kind === 'friends') return 'the two of you';
     if (t.kind === 'firefly') return (C.fireflies && C.fireflies.label) || 'a lost firefly';
     if (t.kind === 'shooting' && t.victory) return 'catch it!';
@@ -945,6 +965,10 @@
     if (t.kind === 'wish') { A.sfx('star'); return openDialog(WI.starTitle, wishStarLine()); }
     if (t.kind === 'initial') return openK();
     if (t.kind === 'book') return openNotebook();
+    if (t.kind === 'fortheart') { A.sfx('open'); return window.FORT.open(() => {}); }
+    if (t.kind === 'door') return openDoor();
+    if (t.kind === 'piano') { A.sfx('star'); return window.PIANO.open(() => {}); }
+    if (t.kind === 'cloud') { A.sfx('open'); return window.SHADOWS.open(() => {}); }
     if (t.kind === 'friends') return startTickle();
     if (t.kind === 'firefly') return openFireflies();
     if (t.kind === 'item') { A.sfx('open'); t.action(); }
@@ -1103,6 +1127,10 @@
     if (m.id === 'playlist-modal') { $('playlist-body').innerHTML = ''; A.setPaused(false); }
     if (m.id === 'tape-modal') stopTape(true);
     if (m.id === 'lightbox') stopFilm();
+    if (m.id === 'room-modal') {
+      cancelAnimationFrame(roomRaf);
+      if (roomAudio && !roomAudio.paused) { roomAudio.pause(); $('room-play').textContent = 'play'; A.setPaused(false); }
+    }
     if (m.id === 'k-modal' && kAudio && !kAudio.paused) { kAudio.pause(); $('k-play').textContent = 'play'; A.setPaused(false); }
     state.modal = m.id === 'lightbox' && $('gallery-modal').classList.contains('open') ? $('gallery-modal') : null;
   }
@@ -1855,6 +1883,159 @@
     }
   });
 
+  /* ---- The secret room: three hidden symbols and a tiny door ------------ */
+  /* Symbols hide on the cassette (1), in the letter (2) and on the snack
+     attack victory screen (3). Found symbols show their number. Entering
+     all three, in order, at the tiny door in the hill opens the room. */
+  const SR = C.secretRoom || {};
+  const KEY_SYMS = 'kamy.symbols', KEY_ROOM = 'kamy.room';
+  const SECRET_ORDER = ['moon', 'flower', 'crown'];
+  const KEYPAD = ['star', 'moon', 'heart', 'leaf', 'crown', 'drop', 'flower', 'key', 'note'];
+  const symImg = id => S.symbols[id].toDataURL();
+
+  function markSymbol(id) {
+    const btn = $('sym-' + id);
+    if (!btn) return;
+    const found = store.get(KEY_SYMS, []).includes(id);
+    btn.classList.toggle('found', found);
+    btn.querySelector('b').textContent = found ? String(SECRET_ORDER.indexOf(id) + 1) : '';
+  }
+
+  window.SECRET = {
+    img: symImg,
+    has: id => store.get(KEY_SYMS, []).includes(id),
+    found(id) {
+      const list = store.get(KEY_SYMS, []);
+      const n = SECRET_ORDER.indexOf(id) + 1;
+      if (!list.includes(id)) {
+        list.push(id);
+        store.set(KEY_SYMS, list);
+        A.sfx('wish');
+        toast(`a secret symbol! it has a little ${n} on it. (${list.length}/3 found)`, 4500);
+      } else {
+        A.sfx('blip');
+        toast(`symbol ${n}. (${list.length}/3 found)`, 2500);
+      }
+      markSymbol(id);
+    }
+  };
+  ['moon', 'flower'].forEach(id => {
+    const b = $('sym-' + id);
+    b.querySelector('img').src = symImg(id);
+    b.addEventListener('click', e => { e.stopPropagation(); window.SECRET.found(id); });
+    markSymbol(id);
+  });
+
+  // the door in the hill
+  const doorPos = () => { const x = mound.peakX + 14; return { x, y: groundY - 9 }; };
+  function drawDoor() {
+    const { x, y } = doorPos();
+    if (state.hover && state.hover.kind === 'door') { ctx.fillStyle = '#ffd87a'; ctx.fillRect(x - 1, y - 1, 7, 9); }
+    ctx.drawImage(S.door, x, y);
+    if (Math.sin(state.t * 0.7) > 0.97) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 3, y + 3, 1, 1); }
+  }
+
+  let doorEntry = [];
+  function renderDoor() {
+    const slots = $('door-slots');
+    slots.replaceChildren(...[0, 1, 2].map(k => {
+      const d = document.createElement('div'); d.className = 'door-slot';
+      if (doorEntry[k]) { const i = new Image(); i.src = symImg(doorEntry[k]); d.appendChild(i); }
+      return d;
+    }));
+  }
+  function openDoor() {
+    if (store.get(KEY_ROOM, false)) return openRoom();
+    A.sfx('open');
+    doorEntry = [];
+    $('door-title').textContent = SR.doorLabel || 'a tiny door';
+    $('door-text').textContent = `${SR.doorText || ''} (${store.get(KEY_SYMS, []).length}/3 found)`;
+    $('door-msg').textContent = '';
+    $('door-keys').replaceChildren(...KEYPAD.map(id => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'door-key'; b.setAttribute('aria-label', id);
+      const i = new Image(); i.src = symImg(id); b.appendChild(i);
+      b.addEventListener('click', () => pressKey(id));
+      return b;
+    }));
+    renderDoor();
+    openModal('door-modal');
+  }
+  function pressKey(id) {
+    if (doorEntry.length >= 3) return;
+    doorEntry.push(id);
+    A.sfx('blip');
+    renderDoor();
+    if (doorEntry.length < 3) return;
+    if (doorEntry.every((s, k) => s === SECRET_ORDER[k])) {
+      store.set(KEY_ROOM, true);
+      A.sfx('win');
+      setTimeout(() => { closeModal(); openRoom(); }, 600);
+    } else {
+      $('door-msg').textContent = 'the door stays shut. try again?';
+      A.sfx('close');
+      const box = document.querySelector('.doorbox');
+      box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+      setTimeout(() => { doorEntry = []; renderDoor(); }, 700);
+    }
+  }
+
+  // the room itself: a warm little pixel room with a fireplace
+  let roomRaf = 0, roomAudio = null;
+  $('room-title').textContent = SR.title || 'our secret room';
+  $('room-note').textContent = real(SR.note);
+  if (SR.image) { $('room-image').src = SR.image; $('room-image').hidden = false; $('room-image').onerror = () => { $('room-image').hidden = true; }; }
+  if (SR.audio) {
+    roomAudio = new Audio(SR.audio);
+    $('room-play').hidden = false;
+    roomAudio.addEventListener('error', () => { $('room-play').hidden = true; });
+    roomAudio.addEventListener('ended', () => { $('room-play').textContent = 'play again'; A.setPaused(false); });
+    $('room-play').addEventListener('click', () => {
+      if (roomAudio.paused) { A.setPaused(true); roomAudio.play().catch(() => {}); $('room-play').textContent = 'pause'; }
+      else { roomAudio.pause(); A.setPaused(false); $('room-play').textContent = 'play'; }
+    });
+  }
+  function drawRoom(t) {
+    const g = $('room-canvas').getContext('2d'), R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+    R(0, 0, 120, 48, '#4a2f3a');
+    for (let x = 0; x < 120; x += 8) R(x, 0, 4, 48, '#52343f');
+    R(0, 48, 120, 16, '#3a2420'); for (let x = 0; x < 120; x += 15) R(x, 48, 1, 16, '#2e1c19');
+    // fireplace
+    R(44, 22, 32, 26, '#6e4a3a'); R(42, 20, 36, 3, '#8a5f4a'); R(50, 30, 20, 18, '#1a100e');
+    for (let k = 0; k < 9; k++) {
+      const hgt = 4 + Math.round((Math.sin(t * 9 + k * 1.7) + 1) * 3) + (k % 3 === 1 ? 3 : 0);
+      R(51 + k * 2, 47 - hgt, 2, hgt, k % 2 ? '#ff9a3c' : '#ffd87a');
+    }
+    R(50, 46, 20, 2, '#4a2a20');
+    // a framed heart, two cushions, candles, a rug
+    R(14, 10, 16, 14, '#ffd87a'); R(16, 12, 12, 10, '#2a1f2a');
+    [[19, 15], [23, 15]].forEach(([x, y]) => R(x, y, 2, 1, '#ff5c8a')); R(18, 16, 8, 2, '#ff5c8a'); R(19, 18, 6, 1, '#ff5c8a'); R(21, 19, 2, 1, '#ff5c8a');
+    R(88, 42, 14, 7, '#ff9ec4'); R(100, 43, 13, 6, '#c3a6ff');
+    [[92, 14], [100, 12], [108, 15]].forEach(([x, y], k) => { R(x, y, 2, 6, '#fff4e2'); R(x, y - 2 - (Math.floor(t * 6 + k) % 2), 2, 2, '#ffd87a'); });
+    for (let y = -3; y <= 3; y++) { const hw = Math.round(Math.sqrt(1 - (y / 3.5) ** 2) * 26); R(60 - hw, 57 + y, hw * 2, 1, y % 2 ? '#8e3a55' : '#a8506c'); }
+  }
+  function openRoom() {
+    A.sfx('open');
+    openModal('room-modal');
+    const loop = now => { drawRoom(now / 1000); roomRaf = requestAnimationFrame(loop); };
+    cancelAnimationFrame(roomRaf);
+    roomRaf = requestAnimationFrame(loop);
+  }
+
+  /* ---- The little heart above them opens the blanket fort --------------- */
+  const heartPos = () => ({ x: mound.peakX - 1, y: mound.friendsTop - 7 + Math.round(Math.sin(state.t * 1.5)) });
+
+  /* ---- The music-note stars open the star piano ------------------------- */
+  const NOTE_ROWS = ['..ooo', '..o.o', '..o.o', '..o..', 'ooo..', 'ooo..', '.o...'];
+  function drawNoteStars() {
+    const { x, y } = noteStar, hov = state.hover && state.hover.kind === 'piano';
+    NOTE_ROWS.forEach((row, yy) => [...row].forEach((c, xx) => {
+      if (c !== 'o') return;
+      const tw = Math.sin(state.t * 2.2 + xx * 1.3 + yy * 0.7);
+      ctx.fillStyle = hov ? '#e6efff' : tw > 0.5 ? '#c8d8ff' : tw > -0.3 ? '#8fa3e0' : '#5a6aa8';
+      ctx.fillRect(x - 2 + xx, y - 3 + yy, 1, 1);
+    }));
+  }
+
   /* ---- Planting her own flower ----------------------------------------- */
   const P = C.planting;
   const pick = { head: 1, color: 0 };
@@ -2051,7 +2232,10 @@
   function start() {
     if (state.started) return;
     state.started = true;
-    A.start(C.song);
+    // her own tune from the star piano plays first, then the music fades in
+    const tune = window.PIANO && window.PIANO.savedTune();
+    const tuneLen = tune && tune.length ? A.playNotes(tune, 150) : 0;
+    A.start(C.song, tuneLen ? tuneLen + 0.4 : 0);
     titleScreen.classList.add('gone');
     $('hud').classList.remove('hidden');
     muteBtn.classList.remove('hidden');
@@ -2083,6 +2267,10 @@
     firefly: () => ({ x: fireflies[0].x, y: fireflies[0].y }),
     finale: () => fireflyFinale(),
     book: () => bookPos(),
+    heart: () => heartPos(),
+    door: () => doorPos(),
+    note: () => noteStar,
+    cloud: () => clouds[0] && { x: clouds[0].x + cloudSprite.width / 2, y: clouds[0].y + 4 },
     tickling: () => !!state.tickle,
     celebrate: s => celebrate(s),
     visible: () => state.visible

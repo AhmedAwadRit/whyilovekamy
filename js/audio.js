@@ -5,8 +5,11 @@
 window.AUDIO = (() => {
   const el = document.getElementById('bgm');
   let ac = null, master = null, chipBus = null, sfxBus = null;
-  let started = false, muted = false, paused = false, usingChip = false, gameOn = false;
-  let targetVol = 0.45, fadeTimer = null, chip = null;
+  let started = false, muted = false, paused = false, usingChip = false;
+  // override replaces the normal music: 'battle' (snack attack), 'lullaby',
+  // 'rain' or 'quiet' (the blanket fort), or null for the usual song
+  let override = null;
+  let targetVol = 0.45, fadeTimer = null, chip = null, holdUntil = 0;
 
   function ctx() {
     if (!ac) {
@@ -38,17 +41,23 @@ window.AUDIO = (() => {
     }, ms / steps);
   }
 
-  function start(song) {
+  // delay: seconds of quiet first (her entrance tune plays in that gap).
+  // play() still happens right away, inside the tap, so phones allow it.
+  function start(song, delay = 0) {
     if (started) return;
     started = true;
     ctx();
+    holdUntil = ac ? ac.currentTime + delay : 0;
     targetVol = song && song.volume != null ? song.volume : 0.45;
     if (!song || !song.src) return startChip();
     el.addEventListener('error', startChip, { once: true });
     el.src = song.src;
     el.volume = 0;
     el.muted = muted;
-    el.play().then(() => { if (gameOn || paused) el.pause(); else fadeEl(targetVol); }).catch(startChip);
+    el.play().then(() => {
+      if (override || paused) el.pause();
+      else setTimeout(() => { if (!override && !paused) fadeEl(targetVol); }, delay * 1000);
+    }).catch(startChip);
   }
 
   /* ---- Chiptune tracks -------------------------------------------------- */
@@ -159,19 +168,29 @@ window.AUDIO = (() => {
     if (usingChip) return;
     usingChip = true;
     el.pause();
-    if (!gameOn) setTrack('lullaby');
+    setTrack(trackFor());
     apply();
+  }
+
+  // which chiptune (if any) should be playing right now
+  function trackFor() {
+    if (override === 'battle') return 'battle';
+    if (override === 'lullaby') return 'lullaby';
+    if (!override && usingChip) return 'lullaby';
+    return null;
   }
 
   /* ---- Controls --------------------------------------------------------- */
   function apply() {
     if (!ac) return;
     master.gain.setTargetAtTime(muted ? 0 : 1, ac.currentTime, 0.05);
-    const chipLive = (usingChip || gameOn) && !paused && !muted;
-    chipBus.gain.setTargetAtTime(chipLive ? targetVol * (gameOn ? 0.8 : 1) : 0, ac.currentTime, gameOn ? 0.1 : 0.4);
+    const chipLive = !!trackFor() && !paused && !muted;
+    chipBus.gain.setTargetAtTime(chipLive ? targetVol * (override === 'battle' ? 0.8 : 1) : 0,
+      Math.max(ac.currentTime, holdUntil), override === 'battle' ? 0.1 : 0.4);
+    if (rainGain) rainGain.gain.setTargetAtTime(override === 'rain' && !paused ? 0.1 : 0, ac.currentTime, 0.4);
     if (!usingChip && started) {
       el.muted = muted;
-      if (paused || gameOn) el.pause();
+      if (paused || override) el.pause();
       else el.play().catch(() => {});
     }
   }
@@ -179,12 +198,45 @@ window.AUDIO = (() => {
   function setMuted(m) { muted = m; apply(); }
   function setPaused(p) { paused = p; if (!p) ctx(); apply(); }
 
-  /* The minigame's battle theme replaces the song while it's open. */
-  function setGame(on) {
-    gameOn = on;
-    ctx();
-    setTrack(on ? 'battle' : usingChip ? 'lullaby' : null);
+  function setOverride(mode) {
+    if (mode === override) return;
+    override = mode || null;
+    if (!ctx()) return;
+    if (override === 'rain') rainBed();
+    setTrack(trackFor());
     apply();
+  }
+  /* The minigame's battle theme replaces the song while it's open. */
+  const setGame = on => setOverride(on ? 'battle' : null);
+
+  // soft rain: filtered noise (built once, faded in and out)
+  let rainGain = null;
+  function rainBed() {
+    if (rainGain) return;
+    const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1600;
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 250;
+    rainGain = ac.createGain(); rainGain.gain.value = 0;
+    src.connect(hp); hp.connect(lp); lp.connect(rainGain); rainGain.connect(master);
+    src.start();
+  }
+
+  /* A short melody (midi notes; null = rest). Returns its length in seconds. */
+  function playNotes(notes, bpm = 150) {
+    if (!ctx() || muted) return 0;
+    const beat = 60 / bpm;
+    let t = ac.currentTime + 0.05;
+    notes.forEach(m => {
+      if (m != null) {
+        note('triangle', freq(m), t, beat * 0.95, 0.3, sfxBus);
+        note('square', freq(m + 12), t, beat * 0.5, 0.025, sfxBus);
+      }
+      t += beat;
+    });
+    return notes.length * beat;
   }
 
   /* ---- Cassette deck ---------------------------------------------------- */
@@ -295,7 +347,7 @@ window.AUDIO = (() => {
   }
 
   return {
-    start, sfx, setMuted, setPaused, setGame, tapeDeck,
+    start, sfx, setMuted, setPaused, setGame, setOverride, playNotes, tapeDeck,
     get muted() { return muted; },
     get started() { return started; }
   };

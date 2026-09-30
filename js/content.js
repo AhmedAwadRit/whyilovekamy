@@ -211,6 +211,53 @@ window.KAMY = {
     finale: "<3"
   },
 
+  /* ---- Cloud shadow theater (tap a cloud) ------------------------------- */
+  /* She slides clouds across the moon to make a shadow picture; each one
+     comes alive as a tiny scene. The shapes are drawn in js/shadows.js:
+     a coffee cup, a little cat, and the two of you. */
+  shadows: {
+    label: "shadow theater",
+    title: "cloud shadow theater",
+    intro: "drag the clouds across the moon to make a shadow picture.",
+    scenes: [
+      { title: "study dates", caption: "[REPLACE: a memory about coffee / dunkin]" },
+      { title: "a little cat", caption: "[REPLACE: an inside joke that fits a cat]" },
+      { title: "the two of us", caption: "[REPLACE: a favorite memory of you two]" }
+    ],
+    doneLine: "the moon keeps all our shadows."
+  },
+
+  /* ---- Blanket fort (tap the little heart above the two of you) --------- */
+  fort: {
+    label: "our blanket fort",
+    title: "our blanket fort",
+    hint: "make it cozy. it'll stay just how you leave it."
+  },
+
+  /* ---- Star piano (tap the little music-note stars in the sky) ---------- */
+  /* notes go from 0 (lowest) to 7 (highest). She can save her own tune; it
+     plays when she opens the site. fromMe is a melody you leave for her. */
+  piano: {
+    label: "star piano",
+    title: "star piano",
+    hint: "tap the stars to write a tune (8 notes).",
+    fromMe: { notes: [4, 5, 7, 6, 5, 4, 2, 4], line: "someone left a little tune here for you." },
+    saved: "saved. it'll play when you arrive."
+  },
+
+  /* ---- The secret room -------------------------------------------------- */
+  /* Three symbols are hidden: on the cassette, in the letter, and on the
+     snack attack victory screen. Entering them at the tiny door in the hill
+     opens this room. */
+  secretRoom: {
+    doorLabel: "a tiny door",
+    doorText: "three symbols are hidden around here. enter them in the order you find the numbers.",
+    title: "our secret room",
+    note: "[REPLACE: something especially personal, just for her]",
+    image: "", // optional, e.g. "assets/photos/secret.jpg"
+    audio: ""  // optional, e.g. "assets/audio/secret.mp3"
+  },
+
   /* ---- Headphones: the playlist ---------------------------------------- */
   /* Paste a Spotify, Apple Music, or YouTube playlist link. Spotify/Apple/
      YouTube links are embedded automatically; anything else opens a button. */
@@ -258,5 +305,36 @@ window.KAMY = {
   ],
   secretsIntro: "drafts, 2am thoughts, and messages i typed and never sent.",
   secretsSendButton: "send them anyway?",
-  secretsOutro: "okay. now you know all of them."
+  secretsOutro: "okay. now you know all of them.",
+
+  /* ---- A call from the moon (end of "things i never tell you") --------- */
+  /* Record short voice clips and save them in assets/audio/call/. Each part
+     plays your clip (the text shows as subtitles, and is used on its own if
+     the clip is missing), then she picks what to say. A part with no choices
+     ends the call. The button only appears once the texts are written. */
+  call: {
+    button: "the moon is calling...",
+    caller: "the moon",
+    start: "hello",
+    parts: {
+      hello: {
+        audio: "assets/audio/call/hello.mp3",
+        text: "[REPLACE: hey... it's me. are you still up?]",
+        choices: [ { say: "i'm up", next: "up" }, { say: "i was asleep...", next: "asleep" } ]
+      },
+      up: {
+        audio: "assets/audio/call/up.mp3",
+        text: "[REPLACE: good. i just wanted to hear your voice. did you read everything?]",
+        choices: [ { say: "every word", next: "every" }, { say: "why'd you never send them?", next: "why" } ]
+      },
+      asleep: {
+        audio: "assets/audio/call/asleep.mp3",
+        text: "[REPLACE: sorry sleepyhead. i'll be quick. i just miss you.]",
+        choices: [ { say: "i miss you too", next: "missyou" } ]
+      },
+      every: { audio: "assets/audio/call/every.mp3", text: "[REPLACE: then you know. goodnight, kamy.]" },
+      why: { audio: "assets/audio/call/why.mp3", text: "[REPLACE: because some things are easier to say on a website at 2am. goodnight.]" },
+      missyou: { audio: "assets/audio/call/missyou.mp3", text: "[REPLACE: go back to sleep. i'll be here tomorrow. goodnight.]" }
+    }
+  }
 };

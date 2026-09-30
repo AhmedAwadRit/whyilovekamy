@@ -105,7 +105,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   box-shadow: 0 -2px 0 var(--pink), 0 2px 0 var(--pink), -2px 0 0 var(--pink), 2px 0 0 var(--pink);
   opacity: 0; pointer-events: none;
   transition: opacity .4s, transform .4s steps(4);
-  z-index: 6;
+  z-index: 40; /* above the games, so messages show up there too */
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
@@ -224,6 +224,39 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: #2a2860; color: var(--muted); font-size: 18px; padding: 8px;
 }
 .polaroid figcaption { font-size: 20px; line-height: 1; padding: 8px 2px 10px; min-height: 36px; }
+
+/* Secret symbols, hidden in plain sight */
+.secret-sym { position: relative; display: inline-flex; align-items: center; gap: 2px; padding: 4px; opacity: .45; transition: opacity .3s; }
+.secret-sym:hover { opacity: .8; }
+.secret-sym img { width: 14px; height: 14px; image-rendering: pixelated; }
+.secret-sym b { font-family: var(--title); font-weight: normal; font-size: 7px; color: var(--pink); }
+.secret-sym.found { opacity: .9; }
+.cassette .secret-sym { position: absolute; right: 3%; bottom: 4%; }
+.paper .secret-sym { display: flex; margin: 14px 0 0 auto; }
+
+/* The tiny door's keypad */
+.panel.doorbox { width: min(380px, 100%); padding: 18px 20px 20px; text-align: center; }
+#door-text { font-size: 20px; color: var(--muted); margin: -8px 0 14px; }
+#door-slots { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; }
+.door-slot { width: 44px; height: 44px; display: grid; place-items: center; background: var(--ink); box-shadow: 0 0 0 3px var(--panel-2); }
+.door-slot img, .door-key img { width: 21px; height: 21px; image-rendering: pixelated; }
+#door-keys { display: grid; grid-template-columns: repeat(3, 56px); gap: 10px; justify-content: center; }
+.door-key { width: 56px; height: 48px; display: grid; place-items: center; background: var(--panel-2); box-shadow: 0 3px 0 var(--ink); }
+.door-key:active { transform: translateY(2px); box-shadow: none; }
+#door-msg { min-height: 22px; font-size: 20px; color: var(--pink); margin: 12px 0 0; }
+.doorbox.shake { animation: shake .4s steps(6); }
+
+/* The secret room */
+.panel.room {
+  width: min(440px, 100%); padding: 0 0 22px; text-align: center; overflow: auto;
+  background: #2a1f2a; box-shadow: 0 0 0 4px #ffd87a, 0 0 0 8px #2a1e18;
+}
+#room-canvas { display: block; width: 100%; image-rendering: pixelated; }
+.room h2 { margin: 16px 20px 8px !important; }
+.room .close { color: #fff3d6; }
+#room-image { display: block; max-width: 80%; max-height: 40dvh; margin: 6px auto 10px; border: 6px solid #fbf7ef; image-rendering: auto; }
+#room-note { font-family: 'Caveat', cursive; font-size: 30px; line-height: 1.15; color: #fff3d6; margin: 6px 24px 0; user-select: text; }
+.room .pixel-btn { margin-top: 14px; }
 
 /* Locked star */
 .panel.lockbox { width: min(380px, 100%); padding: 18px 20px 20px; }
@@ -430,6 +463,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
   padding: 14px 16px; text-align: center; background: rgba(7, 9, 32, .88);
 }
+#mini-controls {
+  position: absolute; left: 2%; right: 2%; bottom: 2.5%;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+}
+#mini-controls .pixel-btn { margin: 0; font-size: 8px; padding: 7px 8px; }
 #mini-screen.soft {
   justify-content: flex-start; padding-top: 9%;
   background: linear-gradient(rgba(7, 9, 32, .92) 0 48%, rgba(7, 9, 32, 0) 72%);
