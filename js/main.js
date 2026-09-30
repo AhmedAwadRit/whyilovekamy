@@ -1190,6 +1190,19 @@
     A.sfx('shutter');
     const fl = $('flash');
     fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+    renderGallery();
+    setTimeout(() => openModal('gallery-modal'), 180);
+  }
+
+  // the prompt and the reset button follow what's still undeveloped
+  function galleryChrome() {
+    const shown = C.photos.filter(p => !$('gallery-grid').children[C.photos.indexOf(p)]?.classList.contains('is-missing'));
+    const anyBlurry = shown.some(undeveloped), anyDone = shown.some(p => !undeveloped(p));
+    $('gallery-hint').textContent = anyBlurry ? (C.galleryHint || 'tap a photo, then rub it gently to develop it.') : '';
+    $('gallery-reset').hidden = !anyDone;
+  }
+
+  function renderGallery() {
     const grid = $('gallery-grid');
     grid.innerHTML = '';
     C.photos.forEach((p, i) => {
@@ -1207,15 +1220,31 @@
         fig.classList.add('is-missing');
         fig.classList.remove('undeveloped');
         cap.textContent = '';
+        galleryChrome();
       };
-      cap.textContent = undeveloped(p) ? '?' : real(p.caption);
+      cap.textContent = undeveloped(p) ? (C.filmThumbHint || 'rub to develop') : real(p.caption);
       if (undeveloped(p)) fig.classList.add('undeveloped');
       fig.append(img, cap);
       fig.addEventListener('click', () => { if (!fig.classList.contains('is-missing')) openLightbox(i); });
       grid.appendChild(fig);
     });
-    setTimeout(() => openModal('gallery-modal'), 180);
+    galleryChrome();
   }
+
+  // reset: every photo goes back to blurry (asks "sure?" first)
+  const galleryReset = $('gallery-reset');
+  galleryReset.addEventListener('click', () => {
+    if (!galleryReset.classList.contains('confirm')) {
+      galleryReset.classList.add('confirm'); galleryReset.textContent = 'sure?';
+      A.sfx('blip');
+      setTimeout(() => { galleryReset.classList.remove('confirm'); galleryReset.textContent = 'reset photos'; }, 3000);
+      return;
+    }
+    galleryReset.classList.remove('confirm'); galleryReset.textContent = 'reset photos';
+    store.set(KEY_DEV, []);
+    A.sfx('shutter');
+    renderGallery();
+  });
 
   function openLightbox(i) {
     const n = C.photos.length;
@@ -1234,12 +1263,14 @@
   $('lb-prev').addEventListener('click', () => openLightbox(lbIndex - 1));
   $('lb-next').addEventListener('click', () => openLightbox(lbIndex + 1));
 
-  /* ---- The polaroid she develops by rubbing it -------------------------- */
-  const KEY_FILM = 'kamy.film';
+  /* ---- Photos she develops by rubbing them ------------------------------ */
+  /* Every photo starts blurry and dim. Rubbing it sharpens the real photo a
+     patch at a time; once most of it is clear, the rest develops with a flash. */
+  const KEY_DEV = 'kamy.developed';
+  const LV = 3; // rubs each patch needs
   const filmCv = $('lb-film'), fctx = filmCv.getContext('2d');
-  const FILM_TONES = ['#2e2a26', '#35302b', '#2a2723', '#3b352f', '#312c28'];
-  const film = { on: false, cols: 0, rows: 0, level: null, tone: null, cool: null, rubbing: false, done: false, photo: null };
-  function undeveloped(p) { return !!p.develop && !store.get(KEY_FILM, false); }
+  const film = { on: false, cols: 0, rows: 0, level: null, cool: null, rubbing: false, done: false, photo: null, blur: null, img: null };
+  function undeveloped(p) { return p.develop !== false && !store.get(KEY_DEV, []).includes(p.src); }
 
   function placeFilm() {
     const img = $('lb-img');
@@ -1251,15 +1282,28 @@
     film.on = true; film.done = false; film.photo = p;
     $('lb-caption').textContent = C.filmHint || 'rub it gently to develop';
     const setup = () => {
-      if (!film.on || !img.naturalWidth) return;
-      // a coarse grid of "unexposed" cells; each takes a few rubs to clear
-      film.cols = 18;
-      film.rows = Math.max(6, Math.round(18 * img.naturalHeight / img.naturalWidth));
+      if (!film.on || !img.naturalWidth || !img.clientWidth) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const W = Math.round(img.clientWidth * dpr), H = Math.round(img.clientHeight * dpr);
+      filmCv.width = W; filmCv.height = H;
+      // patches she rubs clear; each takes a few rubs
+      film.cols = 20;
+      film.rows = Math.max(8, Math.round(20 * H / W));
       const n = film.cols * film.rows;
-      film.level = new Float32Array(n).fill(4);
+      film.level = new Float32Array(n).fill(LV);
       film.cool = new Float64Array(n);
-      film.tone = Array.from({ length: n }, () => FILM_TONES[Math.floor(Math.random() * FILM_TONES.length)]);
-      filmCv.width = film.cols; filmCv.height = film.rows;
+      // the undeveloped look: shrink then stretch the photo (blur), and dim it
+      const tiny = S.canvas(Math.max(4, Math.round(W / 20)), Math.max(4, Math.round(H / 20)));
+      const tg = tiny.getContext('2d');
+      tg.imageSmoothingQuality = 'high';
+      tg.drawImage(img, 0, 0, tiny.width, tiny.height);
+      film.blur = S.canvas(W, H);
+      const bg = film.blur.getContext('2d');
+      bg.imageSmoothingEnabled = true; bg.imageSmoothingQuality = 'high';
+      bg.drawImage(tiny, 0, 0, W, H);
+      bg.fillStyle = 'rgba(42, 30, 38, 0.5)';
+      bg.fillRect(0, 0, W, H);
+      film.img = img;
       placeFilm();
       filmCv.hidden = false;
       drawFilm();
@@ -1270,14 +1314,18 @@
 
   function stopFilm() { film.on = false; film.rubbing = false; filmCv.hidden = true; }
 
+  // blurry base, with the sharp photo showing through wherever she's rubbed
   function drawFilm() {
-    fctx.clearRect(0, 0, film.cols, film.rows);
+    const W = filmCv.width, H = filmCv.height, cw = W / film.cols, ch = H / film.rows;
+    const sx = film.img.naturalWidth / W, sy = film.img.naturalHeight / H;
+    fctx.globalAlpha = 1;
+    fctx.drawImage(film.blur, 0, 0);
     for (let i = 0; i < film.level.length; i++) {
       const l = film.level[i];
-      if (l <= 0) continue;
-      fctx.globalAlpha = Math.min(1, l / 4);
-      fctx.fillStyle = film.tone[i];
-      fctx.fillRect(i % film.cols, Math.floor(i / film.cols), 1, 1);
+      if (l >= LV) continue;
+      const x = (i % film.cols) * cw, y = Math.floor(i / film.cols) * ch;
+      fctx.globalAlpha = 1 - l / LV;
+      fctx.drawImage(film.img, x * sx, y * sy, cw * sx, ch * sy, x, y, cw + 0.5, ch + 0.5);
     }
     fctx.globalAlpha = 1;
   }
@@ -1297,19 +1345,20 @@
     if (!changed) return;
     drawFilm();
     if (Math.random() < 0.25) A.sfx('type');
-    const left = film.level.reduce((a, b) => a + b, 0) / (film.level.length * 4);
-    if (left <= 0.45) finishFilm();
+    const left = film.level.reduce((a, b) => a + b, 0) / (film.level.length * LV);
+    if (left <= 0.4) finishFilm();
   }
 
   // once she's rubbed enough, the rest develops by itself with a flash
   function finishFilm() {
     film.done = true;
-    store.set(KEY_FILM, true);
+    const dev = store.get(KEY_DEV, []);
+    if (!dev.includes(film.photo.src)) { dev.push(film.photo.src); store.set(KEY_DEV, dev); }
     const fade = setInterval(() => {
       let any = false;
-      for (let i = 0; i < film.level.length; i++) if (film.level[i] > 0) { film.level[i] = Math.max(0, film.level[i] - 0.5); any = true; }
+      for (let i = 0; i < film.level.length; i++) if (film.level[i] > 0) { film.level[i] = Math.max(0, film.level[i] - 0.4); any = true; }
       drawFilm();
-      if (!any) { clearInterval(fade); stopFilm(); }
+      if (!any) { clearInterval(fade); stopFilm(); galleryChrome(); }
     }, 60);
     const fl = $('flash');
     fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');

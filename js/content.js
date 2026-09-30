@@ -25,7 +25,7 @@ window.KAMY = {
      sound is optional: a short clip only she'd recognise (mp3/m4a). */
   titleSecret: {
     taps: 5,
-    line: "[REPLACE: an inside joke only kamy will get]",
+    line: "My little cutie, I love you",
     sound: "" // e.g. "assets/audio/inside-joke.mp3"
   },
 
@@ -149,7 +149,7 @@ window.KAMY = {
      can make a wish and seal it away in a small star of its own.
      The wish text is never saved, not even on her phone. Only if she
      ticks "let me read it too" is it sent to you (Supabase > wishes). */
-  shootingStar: "you caught a shooting star. make a wish.",
+  shootingStar: "You caught a shooting star. Make a wish.",
   wish: {
     title: "make a wish",
     placeholder: "type your wish...",
@@ -164,13 +164,13 @@ window.KAMY = {
 
   /* ---- Envelope: the letter -------------------------------------------- */
   letter: {
-    greeting: "dear kamy,",
+    greeting: "Dear kamy,",
     paragraphs: [
       "How can I even explain to everyone that I met the best person in my whole entire life. You make me feel so cared for and so special. You are the light in every room you walk into, and you always know how to make me smile. Even when the whole world seems like a dark place you know what to say and how to take care of me, as do I when it comes to you. You'll always have me no matter what. I will always be yours Kamy, and you can't get rid of me. You're every star in my night sky whenever I look up. The stars themselves are jealous of you. I love you so much Kamy, and I'll always take care of you.",
       "I made this little place because some things are easier to show than to say.",
       "Every star up there is a reason. every flower is a day you came back. the field is going to keep growing, and so is the list."
     ],
-    signoff: "always,",
+    signoff: "Always,",
     signature: "Ahmed"
   },
 
@@ -220,7 +220,7 @@ window.KAMY = {
     title: "cloud shadow theater",
     intro: "drag the clouds across the moon to make a shadow picture.",
     scenes: [
-      { title: "study dates", caption: "[REPLACE: a memory about coffee / dunkin]" },
+      { title: "Coffee Time!", caption: "You and your coffee'" },
       { title: "a little cat", caption: "[REPLACE: an inside joke that fits a cat]" },
       { title: "the two of us", caption: "[REPLACE: a favorite memory of you two]" }
     ],

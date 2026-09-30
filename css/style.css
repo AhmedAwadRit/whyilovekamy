@@ -478,9 +478,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* ---- Developing polaroid --------------------------------------------------- */
 .polaroid.big { position: relative; }
-#lb-film { position: absolute; image-rendering: pixelated; touch-action: none; cursor: grab; }
-.polaroid.undeveloped .ph { filter: brightness(.08) sepia(1) contrast(.8); }
-.polaroid.undeveloped figcaption { color: #a99f93; }
+#lb-film { position: absolute; image-rendering: auto; touch-action: none; cursor: grab; }
+/* undeveloped photos: blurry and dim until she rubs them */
+.polaroid.undeveloped .ph { filter: blur(7px) brightness(.55) saturate(.7); clip-path: inset(0); }
+.polaroid.undeveloped figcaption { color: #9c8a73; font-style: italic; }
+#gallery-hint { font-size: 20px; color: var(--muted); margin: -10px 0 14px; min-height: 0; }
+#gallery-hint:empty { display: none; }
+#gallery-reset { display: block; margin: 8px auto 0; }
 
 /* ---- Letter: paper plane button ------------------------------------------- */
 #letter-plane { margin-top: 26px; font-size: 9px; }
@@ -558,6 +562,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     background: repeating-linear-gradient(to bottom, transparent 0 24px, var(--paper-line) 24px 26px), var(--paper); background-attachment: local; }
   .paper p { margin-bottom: 26px; }
   #gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 16px 12px; }
+  .polaroid.big img { max-width: 68vw; } /* leave room for both arrows */
   .nav { width: 28px; }
 }
 
