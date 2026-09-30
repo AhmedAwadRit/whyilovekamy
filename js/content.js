@@ -29,11 +29,19 @@ window.KAMY = {
     sound: "" // e.g. "assets/audio/inside-joke.mp3"
   },
 
-  /* Optional: a question only she knows the answer to, shown before the
-     site opens. Set to null to skip. (This is a cute lock, not real
-     security: anyone who reads the page source can find the answer.) */
+  /* Passcode to enter the site. Only its hash is stored here; make one with
+       node scripts/lock.mjs hash "your passcode"
+     Once she's entered it, her device remembers. Set to null to turn it off. */
   gate: null,
-  // gate: { question: "what do we call the moon?", answer: "our lamp" },
+  // gate: { question: "passcode?", hash: "..." },
+
+  /* Stars can be locked with a passcode: instead of text, put
+       { locked: "..." }   made with   node scripts/lock.mjs lock "passcode" "text"
+     The words are encrypted, so they can't be read in the site's files. */
+  lockedStars: {
+    title: "a locked reason",
+    prompt: "this one's just for you. what's the passcode?"
+  },
 
   /* ---- Music ----------------------------------------------------------- */
   /* Drop an mp3 into assets/music/ and put its path here.

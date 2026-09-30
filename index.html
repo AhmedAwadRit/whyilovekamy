@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>
+    // always use the secure address (the passcode lock needs it)
+    if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+      location.replace('https://' + location.hostname.replace(/^www\./, '') + location.pathname + location.search + location.hash);
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>why i love kamy</title>
   <meta name="description" content="a little field of stars, just for you.">
@@ -70,6 +76,21 @@
       <button class="close" data-close aria-label="Close">x</button>
       <h2 id="playlist-title"></h2>
       <div id="playlist-body"></div>
+    </div>
+  </div>
+
+  <!-- A locked star -->
+  <div class="modal" id="lock-modal" role="dialog" aria-labelledby="lock-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel pixel-box lockbox">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="lock-title"></h2>
+      <p id="lock-text"></p>
+      <form id="lock-form" autocomplete="off">
+        <input id="lock-input" type="password" spellcheck="false" autocomplete="off" aria-label="Passcode">
+        <button class="pixel-btn" type="submit">unlock</button>
+      </form>
+      <p id="lock-msg"></p>
     </div>
   </div>
 
@@ -220,7 +241,7 @@
       <p id="title-sub"></p>
       <form id="gate" class="hidden" autocomplete="off">
         <label id="gate-q" for="gate-input"></label>
-        <input id="gate-input" type="text" spellcheck="false">
+        <input id="gate-input" type="password" spellcheck="false" autocomplete="off">
         <p id="gate-msg"></p>
       </form>
       <button id="start" class="blink">press start</button>

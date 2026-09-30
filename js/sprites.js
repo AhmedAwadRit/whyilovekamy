@@ -151,9 +151,10 @@ window.SPRITES = (() => {
     base: friendsFrame(false, false),
     point: friendsFrame(true, false),
     both: friendsFrame(true, true),
-    // each of them on their own, for the tickle scene (her on the left, him on the right)
-    girl: make(FRIENDS.map(r => r.slice(0, 7)), FRIEND_PAL),
-    guy: make(FRIENDS.map(r => r.slice(7)), FRIEND_PAL)
+    // each of them on their own, for the tickle scene:
+    // left = him (short hair), right = her (hair down to her shoulders)
+    left: make(FRIENDS.map(r => r.slice(0, 7)), FRIEND_PAL),
+    right: make(FRIENDS.map(r => r.slice(7)), FRIEND_PAL)
   };
 
   // her notebook, lying on the grass next to them
@@ -205,6 +206,8 @@ window.SPRITES = (() => {
   const starB = ['y...y', '.Y.Y.', '..W..', '.Y.Y.', 'y...y'];
   const star = [make(starA, starPal), make(starB, starPal)];
   const starRead = [make(starA, readPal), make(starB, readPal)];
+  const lockedPal = { W: '#ffffff', Y: '#d9b8ff', y: '#8d6fc4' };
+  const starLocked = [make(starA, lockedPal), make(starB, lockedPal)];
 
   /* ---- Flowers --------------------------------------------------------- */
   const HEADS = [
@@ -255,7 +258,7 @@ window.SPRITES = (() => {
   return {
     canvas, make, outline, flower,
     headphones, envelope, camera, seeds, tape, friends, pineappleTiny, book, anger, heart, smallHeart,
-    speakerOn, speakerOff, star, starRead,
+    speakerOn, speakerOff, star, starRead, starLocked,
     HEAD_COUNT: HEADS.length, COLOR_COUNT: COLORS.length,
     COLORS
   };

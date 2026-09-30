@@ -29,6 +29,12 @@
   // placeholder text ("[REPLACE: ...]") counts as not written yet, so it never shows on the live site
   const real = s => (typeof s === 'string' && !s.includes('[REPLACE') ? s : '');
   const isLocal = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  // passcodes ignore capitals, spaces and symbols (must match scripts/lock.mjs)
+  const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  async function sha256(s) {
+    const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
   const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 
   /* ---- Visits → flowers ------------------------------------------------ */
@@ -581,7 +587,7 @@
 
     // reason stars
     for (const s of stars) {
-      const frames = state.read.has(s.i) ? S.starRead : S.star;
+      const frames = state.read.has(s.i) ? S.starRead : isLocked(C.reasons[s.i]) ? S.starLocked : S.star;
       const f = Math.floor(t * s.speed + s.phase) % 2;
       const hover = state.hover === s;
       if (hover || Math.sin(t * 1.7 + s.phase) > 0.2) {
@@ -865,7 +871,7 @@
   function labelFor(t) {
     if (t.kind === 'item') return t.label;
     if (t.kind === 'moon') return 'things i never tell you';
-    if (t.kind === 'star') return state.read.has(t.i) ? `reason #${t.i + 1} (read)` : 'a reason';
+    if (t.kind === 'star') return state.read.has(t.i) ? `reason #${t.i + 1} (read)` : isLocked(C.reasons[t.i]) ? 'a locked reason' : 'a reason';
     if (t.kind === 'shooting') return 'catch it!';
     if (t.planted) return 'a note';
     if (t.kind === 'ship') return (C.game && C.game.shipLabel) || 'a little game';
@@ -955,6 +961,12 @@
   }
 
   function openStar(s) {
+    const reason = C.reasons[s.i];
+    if (isLocked(reason)) return openLockedStar(s, reason);
+    showReason(s, reason);
+  }
+
+  function showReason(s, text) {
     A.sfx('star');
     burst(s.x, s.y, ['#fff3d6', '#ffe7a0', '#ffb3cf'], 12, 22);
     const first = !state.read.has(s.i);
@@ -963,11 +975,66 @@
     updateHud();
     hideHint();
     const all = first && state.read.size === stars.length && stars.length === C.reasons.length;
-    openDialog(`reason #${s.i + 1}`, C.reasons[s.i], all ? () => {
+    openDialog(`reason #${s.i + 1}`, text, all ? () => {
       formConstellation(false);
       setTimeout(() => openDialog('every star', C.allStarsFound), (FORM_TIME + LINE_TIME) * 1000 + 900);
     } : null);
   }
+
+  /* ---- Locked stars ------------------------------------------------------ */
+  /* A star can hold { locked: "..." } instead of text: its words are
+     encrypted with a passcode (scripts/lock.mjs), so they aren't readable
+     in the site's files. Once unlocked, the code is kept for this browsing
+     session only, so the stars lock again if the site is shown later. */
+  const KEY_STARCODE = 'kamy.starcode';
+  const LS = C.lockedStars || {};
+  const isLocked = r => !!(r && typeof r === 'object' && r.locked);
+  $('lock-title').textContent = LS.title || 'a locked reason';
+  $('lock-text').textContent = LS.prompt || '';
+  let lockTarget = null;
+
+  const session = {
+    get() { try { return sessionStorage.getItem(KEY_STARCODE); } catch (e) { return null; } },
+    set(v) { try { sessionStorage.setItem(KEY_STARCODE, v); } catch (e) {} }
+  };
+
+  async function decryptReason(payload, code) {
+    const bytes = Uint8Array.from(atob(payload), c => c.charCodeAt(0));
+    const salt = bytes.slice(0, 16), iv = bytes.slice(16, 28), data = bytes.slice(28);
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(norm(code)), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 150000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data));
+  }
+
+  async function openLockedStar(s, reason) {
+    const saved = session.get();
+    if (saved) {
+      try { return showReason(s, await decryptReason(reason.locked, saved)); } catch (e) { /* fall through to asking */ }
+    }
+    lockTarget = s;
+    A.sfx('blip');
+    $('lock-input').value = '';
+    $('lock-msg').textContent = '';
+    openModal('lock-modal');
+    setTimeout(() => $('lock-input').focus(), 50);
+  }
+
+  $('lock-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const s = lockTarget, code = $('lock-input').value;
+    if (!s) return;
+    try {
+      const text = await decryptReason(C.reasons[s.i].locked, code);
+      session.set(code);
+      closeModal();
+      showReason(s, text);
+    } catch (err) {
+      $('lock-msg').textContent = 'not quite. try again?';
+      A.sfx('close');
+      const box = document.querySelector('.lockbox');
+      box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+    }
+  });
 
   /* ---- Dialog (typewriter text box) ------------------------------------ */
   const dlgLayer = $('dialog-layer'), dlg = $('dialog'), dlgText = $('dialog-text');
@@ -1395,41 +1462,42 @@
     ctx.fillRect(Math.round(x1), Math.round(y1) - 1, 1, 1);
   }
 
+  // He's on the left (short hair); she's on the right (hair down to her shoulders).
   function drawTickle() {
     const tk = state.tickle, e = state.t - tk.t0;
     const x0 = mound.friendsX, top = mound.friendsTop;
     const wig = Math.floor(e * 12) % 2;
-    let gx = 0, gy = 0, bx = 0, by = 0, who = null, angry = false, sweat = false;
+    let hx = 0, hy = 0, sx = 0, sy = 0, who = null, angry = false, sweat = false; // h = him, s = her
 
-    if (e < 0.5) gx = 1;                                   // she turns to him...
+    if (e < 0.5) sx = -1;                                  // she turns to him...
     else if (e < 2.9) {                                    // ...and tickles; he can't stop laughing
-      gx = 1; who = 'her';
-      bx = Math.floor(e * 10) % 2; by = -(Math.floor(e * 7) % 2);
+      sx = -1; who = 'her';
+      hx = -(Math.floor(e * 10) % 2); hy = -(Math.floor(e * 7) % 2);
     } else if (e < 3.5) { /* he catches his breath */ }
-    else if (e < 4.2) { bx = -1; who = 'him'; }            // his turn...
+    else if (e < 4.2) { hx = 1; who = 'him'; }             // his turn...
     else if (e < 6.2) {                                    // ...she is NOT amused: stands up, scoots away
-      bx = -1; who = e < 5.2 ? 'him' : null; angry = true;
-      gx = -2; gy = -2;
+      hx = 1; who = e < 5.2 ? 'him' : null; angry = true;
+      sx = 2; sy = -2;
       sweat = e > 5.2;
-    } else if (e < 6.9) { angry = true; gx = -1; gy = -1; sweat = true; } // sitting back down, still grumpy
+    } else if (e < 6.9) { angry = true; sx = 1; sy = -1; sweat = true; } // sitting back down, still grumpy
     // then back to how they were
 
-    ctx.drawImage(S.friends.girl, x0 + gx, top + gy);
-    ctx.drawImage(S.friends.guy, x0 + 7 + bx, top + by);
+    ctx.drawImage(S.friends.left, x0 + hx, top + hy);
+    ctx.drawImage(S.friends.right, x0 + 7 + sx, top + sy);
 
-    if (who === 'her') arm(x0 + gx + 5, top + gy + 5, x0 + 8 + bx, top + by + 5 + wig);
-    if (who === 'him') arm(x0 + 8 + bx, top + by + 5, x0 + gx + 5, top + gy + 5 + wig);
+    if (who === 'her') arm(x0 + 8 + sx, top + sy + 5, x0 + 5 + hx, top + hy + 5 + wig);
+    if (who === 'him') arm(x0 + 5 + hx, top + hy + 5, x0 + 8 + sx, top + sy + 5 + wig);
 
     // "HA HA" floating up while he laughs
     for (let k = 0; k < 5; k++) {
       const age = e - (0.7 + k * 0.42);
       if (age < 0 || age > 1.1) continue;
       if (age > 0.8 && Math.floor(age * 20) % 2) continue;
-      tinyText('HA', x0 + 9 + bx + (k % 2 ? 4 : -3), top - 7 - age * 7, k % 2 ? '#ffe7a0' : '#ff9ec4');
+      tinyText('HA', x0 + 1 + hx + (k % 2 ? 3 : -5), top - 7 - age * 7, k % 2 ? '#ffe7a0' : '#ff9ec4');
     }
-    if (angry && Math.floor(e * 5) % 2 === 0) ctx.drawImage(S.anger, x0 + gx, top + gy - 7);
-    if (angry && e > 4.3 && e < 5.0) tinyText('!', x0 + gx + 6, top + gy - 8, '#ff5c5c');
-    if (sweat) { ctx.fillStyle = '#9fd4ff'; ctx.fillRect(x0 + 15 + bx, top + by - 1 + Math.floor((e * 4) % 3), 1, 2); }
+    if (angry && Math.floor(e * 5) % 2 === 0) ctx.drawImage(S.anger, x0 + 9 + sx, top + sy - 7);
+    if (angry && e > 4.3 && e < 5.0) tinyText('!', x0 + 15 + sx, top + sy - 8, '#ff5c5c');
+    if (sweat) { ctx.fillStyle = '#9fd4ff'; ctx.fillRect(x0 - 1 + hx, top + hy - 1 + Math.floor((e * 4) % 3), 1, 2); }
 
     if (e >= TICKLE_LEN - 1) {                             // they've made up
       state.tickle = null;
@@ -1876,7 +1944,7 @@
 
   document.addEventListener('keydown', e => {
     if (!state.started) {
-      if ((e.key === 'Enter' || e.key === ' ') && !C.gate) { e.preventDefault(); start(); }
+      if ((e.key === 'Enter' || e.key === ' ') && !needsGate()) { e.preventDefault(); start(); }
       return;
     }
     if (state.dialog && (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape')) { e.preventDefault(); return advanceDialog(); }
@@ -1939,22 +2007,27 @@
   $('title-sub').textContent = C.subtitle;
   document.title = C.title;
 
+  /* The passcode at the start. Only a hash of it is in the site's files
+     (made with scripts/lock.mjs); once she's in, this device remembers. */
   const titleScreen = $('title-screen');
   const gate = $('gate');
-  if (C.gate) {
+  const KEY_GATE = 'kamy.gate';
+  const needsGate = () => !!(C.gate && store.get(KEY_GATE, '') !== C.gate.hash);
+  if (needsGate()) {
     gate.classList.remove('hidden');
     $('gate-q').textContent = C.gate.question;
     $('start').textContent = 'enter';
     gate.addEventListener('submit', e => { e.preventDefault(); tryGate(); });
   }
-  const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
-  function tryGate() {
-    if (norm($('gate-input').value) === norm(C.gate.answer)) return start();
+  async function tryGate() {
+    const h = await sha256(norm($('gate-input').value));
+    if (h === C.gate.hash) { store.set(KEY_GATE, h); return start(); }
     $('gate-msg').textContent = 'hmm, not quite. try again?';
+    A.sfx('close');
     gate.classList.remove('shake'); void gate.offsetWidth; gate.classList.add('shake');
   }
   titleScreen.addEventListener('click', e => {
-    if (C.gate) { if (e.target.id === 'start') tryGate(); return; }
+    if (needsGate()) { if (e.target.id === 'start') tryGate(); return; }
     start();
   });
 
@@ -1980,6 +2053,7 @@
   // used by scripts/shoot.mjs to find things on the canvas
   window.__debug = {
     star0: () => stars[0],
+    star: i => stars[i],
     item: id => items.find(i => i.id === id),
     field: () => ({ w, h, groundY }),
     planted: () => planted.map(f => ({ x: f.x, y: f.y, ay: f.ay, note: f.note })),
