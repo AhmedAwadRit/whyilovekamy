@@ -32,12 +32,18 @@ window.GHOSTRACE = (() => {
   /* ---- Saved runs ------------------------------------------------------------ */
   const LOCAL = 'kamy.ghosts';
   const local = () => { try { return JSON.parse(localStorage.getItem(LOCAL)) || {}; } catch (e) { return {}; } };
+  // online runs win when we can reach them (so a run deleted there is gone
+  // everywhere); this device's copy is only a fallback for when we can't
   async function loadGhosts() {
-    const out = local();
     if (CL.enabled && CL.ghosts) {
-      try { for (const r of await CL.ghosts()) out[r.who] = { time: r.time, run: r.run }; } catch (e) {}
+      try {
+        const out = {};
+        for (const r of await CL.ghosts()) out[r.who] = { time: r.time, run: r.run };
+        try { localStorage.setItem(LOCAL, JSON.stringify(out)); } catch (e) {}
+        return out;
+      } catch (e) {}
     }
-    return out;
+    return local();
   }
   async function saveGhost(time, run) {
     const all = local();
