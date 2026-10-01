@@ -293,6 +293,26 @@ window.KAMY = {
     doneLine: "pinball wizard. is there anything you can't do?"
   },
 
+  /* Backpack Panic: fit everything in before the bus comes */
+  backpack: {
+    title: "backpack panic",
+    intro: "the bus is coming. get everything in the backpack. it all fits, i promise.",
+    seconds: 40,          // time for the first round; each round gets 12 more
+    // a line after each round (the last round shows doneLine instead)
+    rounds: [
+      "easy. you're a natural.",
+      "the headphones are in. crisis averted.",
+      "hydrated AND organized.",
+      "the laptop fit. somehow.",
+      "why is there a pineapple. don't answer that.",
+      "one more thing. it's small, i swear."
+    ],
+    lateTitle: "the bus left",
+    lateLine: "without you. try that round again.",
+    doneTitle: "everything fits.",
+    doneLine: "the airpods too. first try. (don't lose them.)"
+  },
+
   /* ---- Cloud shadow theater (tap a cloud) ------------------------------- */
   /* She slides clouds across the moon to make a shadow picture; each one
      comes alive as a tiny scene. The shapes are drawn in js/shadows.js:
