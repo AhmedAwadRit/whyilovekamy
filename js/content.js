@@ -313,6 +313,25 @@ window.KAMY = {
     doneLine: "the airpods too. first try. (don't lose them.)"
   },
 
+  /* RIT After Dark: a dark campus maze */
+  campus: {
+    title: "rit after dark",
+    intro: "you left your stuff all over campus. find it in the dark and get out before security does their rounds.",
+    nights: ["night 1. 3 things to find.", "night 2. 4 things. bigger campus.", "night 3. everything. good luck."],
+    // the doors send you between these
+    buildings: ["GOL", "the SAU", "the library", "Gleason", "Gosnell", "Booth", "the field house", "Crossroads", "the Infinity Quad", "Eastman"],
+    doorLines: [
+      "you took a door in {a} and somehow ended up in {b}.",
+      "{a} -> {b}?? how.",
+      "that door in {a} goes to {b}. obviously."
+    ],
+    outLines: ["out. that was easy.", "made it. security didn't even see you."],
+    caughtTitle: "busted",
+    caughtLine: "campus security found you wandering around. try again.",
+    doneTitle: "safe and sound",
+    doneLine: "every night, no matter where you end up, i'll come find you."
+  },
+
   /* ---- Cloud shadow theater (tap a cloud) ------------------------------- */
   /* She slides clouds across the moon to make a shadow picture; each one
      comes alive as a tiny scene. The shapes are drawn in js/shadows.js:
