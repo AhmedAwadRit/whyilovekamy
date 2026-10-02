@@ -132,6 +132,7 @@
   const shown = s => real(s) || (isLocal ? s : '');
 
   let ac = null, ringTimer = null, clip = null, callT0 = 0, clock = null;
+  let speaking = null, onCall = false; // the part being said right now (so voicemail can pause it)
   function beep(f, when, dur, vol = 0.05) {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
     const o = ac.createOscillator(), g = ac.createGain();
@@ -231,6 +232,8 @@
   $('call-accept').addEventListener('click', () => {
     clearInterval(ringTimer);
     $('call-actions').hidden = true;
+    onCall = true;
+    $('vm-btn').hidden = !voicemails.length;
     const ln = phoneLine();
     if (ac && ac.state !== 'running') ac.resume(); // her tap unlocks sound
     ln.hiss(true);
@@ -253,9 +256,11 @@
     $('call-choices').replaceChildren();
     wave.classList.add('talking');
     let done = false, typing = null;
+    speaking = { id, cancel: () => { done = true; clearInterval(typing); wave.classList.remove('talking'); } };
     const finish = () => {
       if (done) return;
       done = true;
+      speaking = null;
       clearInterval(typing);
       sub.textContent = text;
       wave.classList.remove('talking');
@@ -313,6 +318,8 @@
 
   function hangUp() {
     if (current) { current.stop(); current = null; }
+    onCall = false; speaking = null;
+    stopVoicemail(); $('vm').hidden = true; $('vm-btn').hidden = true;
     if (line) line.hiss(false);
     clearInterval(clock);
     beep(440, 0, 0.1, 0.04); beep(330, 0.12, 0.15, 0.04);
@@ -320,6 +327,100 @@
     $('call-wave').classList.remove('talking');
     setTimeout(() => { $('call').hidden = true; $('call-btn').textContent = 'call again'; }, 1400);
   }
+
+  /* ---- Voicemail (secret) ------------------------------------------------- */
+  /* During the call, the faint icon in the corner (or the moon) opens the
+     voicemails you left other people. The call pauses, and picks up again
+     from the same line when she goes back. */
+  const VM = C.voicemail || {};
+  const voicemails = (VM.list || []).filter(v => v.audio || isLocal);
+  const vmIcon = $('vm-btn').querySelector('canvas').getContext('2d');
+  vmIcon.fillStyle = '#fff3d6';
+  [[1, 0], [2, 0], [0, 1], [3, 1], [0, 2], [3, 2], [1, 3], [2, 3], [5, 0], [6, 0], [4, 1], [7, 1], [4, 2], [7, 2], [5, 3], [6, 3], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4]]
+    .forEach(([x, y]) => vmIcon.fillRect(x, y, 1, 1));   // the little "oo" voicemail sign
+  $('vm-title').textContent = VM.title || 'voicemail';
+  $('vm-intro').textContent = VM.intro || '';
+
+  let vmNow = null, resumeId = null;
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+
+  function openVoicemail() {
+    if (!onCall || !voicemails.length || !$('vm').hidden) return;
+    // pause whatever he's saying; that line starts over when she comes back
+    if (speaking) { resumeId = speaking.id; if (current) { current.stop(); current = null; } speaking.cancel(); speaking = null; }
+    $('vm-sub').textContent = '';
+    $('vm-list').replaceChildren(...voicemails.map(v => {
+      const row = document.createElement('button');
+      row.type = 'button'; row.className = 'vm-row' + (v.audio ? '' : ' missing');
+      const play = document.createElement('span'); play.className = 'play';
+      const name = document.createElement('span');
+      name.textContent = v.name;
+      if (v.tag) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = ' · ' + v.tag; name.append(t); }
+      const len = document.createElement('span'); len.className = 'len'; len.textContent = v.audio ? '' : 'no message yet';
+      const bar = document.createElement('span'); bar.className = 'bar'; bar.append(document.createElement('i'));
+      row.append(play, name, len, bar);
+      row.addEventListener('click', () => playVoicemail(v, row));
+      if (v.audio && line && line.input) loadClip(v.audio).then(b => { len.textContent = fmt(b.duration); }).catch(() => {});
+      return row;
+    }));
+    $('vm').hidden = false;
+    beep(1180, 0, 0.06, 0.03);
+  }
+
+  function stopVoicemail() {
+    if (!vmNow) return;
+    vmNow.stop();
+    vmNow.row.classList.remove('playing');
+    vmNow = null;
+  }
+
+  function playVoicemail(v, row) {
+    const same = vmNow && vmNow.v === v;
+    stopVoicemail();
+    if (same || !v.audio) return;
+    const sub = $('vm-sub'), words = v.translation || v.transcript || '';
+    const fill = row.querySelector('.bar i');
+    sub.textContent = '';
+    row.classList.add('playing');
+    let raf = 0, stopped = false;
+    const show = k => { fill.style.width = (Math.min(1, k) * 100) + '%'; if (words) sub.textContent = words.slice(0, Math.ceil(words.length * Math.min(1, k * 1.15))); };
+    const end = () => { if (stopped) return; show(1); stopVoicemail(); };
+    const me = vmNow = { v, row, stop: () => { stopped = true; cancelAnimationFrame(raf); } };
+    const plain = () => {
+      if (me !== vmNow) return;
+      plainEl.src = v.audio;
+      plainEl.onended = end;
+      plainEl.onerror = end;
+      const tick = () => { if (plainEl.duration) show(plainEl.currentTime / plainEl.duration); raf = requestAnimationFrame(tick); };
+      me.stop = () => { stopped = true; cancelAnimationFrame(raf); plainEl.onended = plainEl.onerror = null; plainEl.pause(); };
+      plainEl.play().then(tick).catch(end);
+    };
+    beep(1000, 0, 0.3, 0.035);   // the voicemail beep
+    if (!line || !line.input) { setTimeout(plain, 380); return; }
+    loadClip(v.audio).then(buf => {
+      if (me !== vmNow) return;
+      setTimeout(() => {
+        if (me !== vmNow) return;
+        const src = ac.createBufferSource();
+        src.buffer = buf; src.connect(line.input); src.onended = end;
+        const t0 = ac.currentTime;
+        src.start();
+        const tick = () => { show((ac.currentTime - t0) / buf.duration); raf = requestAnimationFrame(tick); };
+        tick();
+        me.stop = () => { stopped = true; cancelAnimationFrame(raf); src.onended = null; try { src.stop(); } catch (e) {} };
+      }, 380);
+    }).catch(plain);
+  }
+
+  $('vm-btn').addEventListener('click', openVoicemail);
+  $('call-moon').addEventListener('click', openVoicemail);
+  $('vm-back').addEventListener('click', () => {
+    stopVoicemail();
+    $('vm').hidden = true;
+    beep(880, 0, 0.06, 0.03);
+    if (resumeId) { const id = resumeId; resumeId = null; setTimeout(() => speak(id), 400); }
+  });
+  window.__vm = { open: openVoicemail, state: () => ({ open: !$('vm').hidden, playing: vmNow && vmNow.v.name, resumeId, speaking: speaking && speaking.id }) }; // (tests)
 
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(play);
 })();

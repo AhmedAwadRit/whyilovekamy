@@ -437,23 +437,91 @@ window.KAMY = {
     button: "the moon is calling...",
     caller: "the moon",
     start: "hello",
+    /* Parts with audio: "" don't have a recording yet: they show their text
+       as subtitles instead. When you record one, drop the file in
+       assets/audio/call/ and put its path in audio (and change the text to
+       match what you actually said, or empty it to hide the subtitles).
+       A choice with next: "" hangs up. */
     parts: {
       hello: { audio: "assets/audio/call/hello.m4a", text: "", then: "areyouup" },
       areyouup: {
         audio: "assets/audio/call/are-you-up.m4a", text: "",
+        choices: [
+          { say: "i'm up", next: "up" },
+          { say: "i was asleep...", next: "asleep" },
+          { say: "who is this?", next: "whothis" }
+        ]
+      },
+      whothis: {
+        audio: "", text: "who else would call you this late? it's the moon. ...okay, it's me.",
         choices: [ { say: "i'm up", next: "up" }, { say: "i was asleep...", next: "asleep" } ]
       },
       up: {
         audio: "assets/audio/call/im-up.m4a", text: "",
+        choices: [
+          { say: "every word", next: "every" },
+          { say: "why'd you never send them?", next: "why" },
+          { say: "read what?", next: "readwhat" }
+        ]
+      },
+      readwhat: {
+        audio: "", text: "the texts. the ones i wrote and never sent. you just read all of them.",
         choices: [ { say: "every word", next: "every" }, { say: "why'd you never send them?", next: "why" } ]
       },
+      every: {
+        audio: "assets/audio/call/every.m4a", text: "",
+        choices: [
+          { say: "say one out loud", next: "outloud" },
+          { say: "i have one for you too", next: "yours" },
+          { say: "goodnight, moon", next: "goodnight" }
+        ]
+      },
+      outloud: {
+        audio: "", text: "...okay. you make every bad day better. there. i said it.",
+        choices: [ { say: "say another one", next: "another" }, { say: "goodnight", next: "goodnight" } ]
+      },
+      another: { audio: "", text: "i think about you more than i'll ever admit. that's all you're getting tonight.", then: "goodnight" },
+      yours: { audio: "", text: "you do? ...tell me tomorrow. in person. i want to see your face when you say it.", then: "goodnight" },
+      why: {
+        audio: "assets/audio/call/why.m4a", text: "",
+        choices: [
+          { say: "you can tell me anything", next: "anything" },
+          { say: "send them next time", next: "nexttime" }
+        ]
+      },
+      anything: { audio: "", text: "i know. that's why i'm calling.", then: "goodnight" },
+      nexttime: { audio: "", text: "deal. but you have to answer every single one.", then: "goodnight" },
       asleep: {
         audio: "assets/audio/call/i-miss-you.m4a", text: "",
-        choices: [ { say: "i miss you too", next: "goodnight" } ]
+        choices: [ { say: "i miss you too", next: "goodnight" }, { say: "then come over", next: "comeover" } ]
       },
-      every: { audio: "assets/audio/call/every.m4a", text: "" },
-      why: { audio: "assets/audio/call/why.m4a", text: "" },
-      goodnight: { audio: "assets/audio/call/goodnight.m4a", text: "" }
+      comeover: {
+        audio: "", text: "it's way too late. ...don't tempt me.",
+        choices: [ { say: "i'm serious", next: "serious" }, { say: "fine. goodnight", next: "goodnight" } ]
+      },
+      serious: { audio: "", text: "...okay. next time, i'm not hanging up first.", then: "goodnight" },
+      goodnight: {
+        audio: "assets/audio/call/goodnight.m4a", text: "",
+        choices: [ { say: "don't hang up yet", next: "stay" }, { say: "goodnight", next: "" } ]
+      },
+      stay: { audio: "", text: "okay. i'll stay on until you fall asleep." }
     }
+  },
+
+  /* ---- Voicemail (secret: tap the little voicemail icon, or the moon,
+     during the call) ----------------------------------------------------- */
+  /* Put each recording in assets/audio/voicemail/ and its path in audio.
+     Ones with audio: "" don't show up on the real site. transcript shows as
+     subtitles while it plays; translation is for the Turkish one. */
+  voicemail: {
+    title: "voicemail",
+    intro: "messages i left other people. about you.",
+    list: [
+      { name: "Jannat", audio: "", transcript: "" },
+      { name: "Khaled", audio: "", transcript: "" },
+      { name: "Archie", audio: "", transcript: "" },
+      { name: "Deniz", tag: "in turkish", audio: "", transcript: "", translation: "" },
+      { name: "Myself", audio: "", transcript: "" }
+    ]
   }
 };
