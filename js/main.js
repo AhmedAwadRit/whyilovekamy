@@ -1171,6 +1171,7 @@
     A.sfx('close');
     if (m.id === 'playlist-modal') { $('playlist-body').innerHTML = ''; A.setPaused(false); }
     if (m.id === 'tape-modal') stopTape(true);
+    if (m.id === 'sorry-modal') { window.SORRY.close(); A.setOverride(null); }
     if (m.id === 'lightbox') stopFilm();
     if (m.id === 'room-modal') {
       cancelAnimationFrame(roomRaf);
@@ -2418,7 +2419,18 @@
     if (stars.length === C.reasons.length && state.read.size === stars.length) setTimeout(() => formConstellation(false), 900);
     // a wish she sealed on an earlier visit glows briefly to welcome her back
     if (wishes.length) setTimeout(() => { state.wishGlow = { t0: state.t, dur: 4.5 }; }, 2600);
+    // "i'm sorry": the first thing she sees
+    if (window.SORRY && window.SORRY.due()) setTimeout(openSorry, 700);
   }
+  function openSorry() {
+    if (state.modal) closeModal(state.modal);
+    A.setOverride('rain');
+    window.SORRY.open();
+    openModal('sorry-modal');
+    A.sfx('open');
+  }
+  // whyilovekamy.com/#sorry opens it again (once she's in)
+  window.addEventListener('hashchange', () => { if (location.hash === '#sorry' && state.started) openSorry(); });
 
   // used by scripts/shoot.mjs to find things on the canvas
   window.__debug = {
@@ -2436,6 +2448,7 @@
     firefly: () => ({ x: fireflies[0].x, y: fireflies[0].y }),
     airpod: () => airpod,
     arcade: () => arcade,
+    sorry: () => openSorry(),
     finale: () => fireflyFinale(),
     book: () => bookPos(),
     heart: () => heartPos(),

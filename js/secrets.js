@@ -99,6 +99,7 @@
 
   let sent = false;
   document.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('#tabs, #tab-sorry')) return;
     if (e.target.id === 'send' || sent) return;
     if ($('send').classList.contains('hidden')) fast = true; // tap to skip ahead
   });
@@ -421,6 +422,87 @@
     if (resumeId) { const id = resumeId; resumeId = null; setTimeout(() => speak(id), 400); }
   });
   window.__vm = { open: openVoicemail, state: () => ({ open: !$('vm').hidden, playing: vmNow && vmNow.v.name, resumeId, speaking: speaking && speaking.id }) }; // (tests)
+
+  /* ---- The "i'm sorry" tab ------------------------------------------------ */
+  const SR = C.sorryTexts || {};
+  const sorryMsgs = (SR.messages || []).map(parse);
+  let sorryStarted = false, sorryFast = false;
+  if (sorryMsgs.length) {
+    $('tabs').hidden = false;
+    const [tUnsent, tSorry] = $('tabs').querySelectorAll('.tab');
+    tUnsent.textContent = SR.firstTab || 'unsent';
+    tSorry.textContent = SR.tab || "i'm sorry";
+    let opened = false;
+    try { opened = localStorage.getItem('kamy.sorrytab') === '1'; } catch (e) {}
+    if (!opened) tSorry.classList.add('new');
+    $('tabs').addEventListener('click', e => {
+      const b = e.target.closest('.tab');
+      if (!b) return;
+      for (const t of $('tabs').querySelectorAll('.tab')) t.classList.toggle('on', t === b);
+      const which = b.dataset.tab;
+      $('tab-unsent').hidden = which !== 'unsent';
+      $('tab-sorry').hidden = which !== 'sorry';
+      if (which === 'sorry') {
+        b.classList.remove('new');
+        try { localStorage.setItem('kamy.sorrytab', '1'); } catch (e) {}
+        if (!sorryStarted) playSorry();
+      }
+    });
+    $('tab-sorry').addEventListener('click', e => { if (e.target.id !== 'sorry-send' && e.target.id !== 'sorry-letter') sorryFast = true; });
+  }
+
+  async function playSorry() {
+    sorryStarted = true;
+    $('sorry-intro').textContent = SR.intro || '';
+    const box = $('sorry-thread'), nodes2 = [];
+    const nap = ms => new Promise(r => setTimeout(r, sorryFast ? 0 : ms));
+    await nap(600);
+    for (const s of sorryMsgs) {
+      const msg = document.createElement('div'); msg.className = 'msg';
+      const bubble = document.createElement('div'); bubble.className = 'bubble';
+      const status = document.createElement('div'); status.className = 'status';
+      msg.append(bubble, status);
+      box.appendChild(msg);
+      nodes2.push({ msg, bubble, status });
+      if (!sorryFast) msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // typed slowly, letter by letter
+      const caret = document.createElement('span'); caret.className = 'caret';
+      const typed = document.createTextNode('');
+      bubble.append(typed, caret);
+      for (let i = 1; i <= s.text.length && !sorryFast; i++) {
+        typed.nodeValue = s.text.slice(0, i);
+        await nap(80 + (/[,.?!]/.test(s.text[i - 1]) ? 200 : 0));
+      }
+      bubble.textContent = s.text;
+      await nap(800);
+      msg.classList.add('ghost');
+      status.textContent = s.status;
+      status.classList.add('show');
+      await nap(1000);
+    }
+    sorryFast = false;
+    const send = $('sorry-send');
+    send.textContent = SR.sendButton || 'send them';
+    send.classList.remove('hidden');
+    send.onclick = async () => {
+      send.classList.add('hidden');
+      for (const n of nodes2) {
+        n.msg.classList.remove('ghost');
+        n.msg.classList.add('delivered');
+        n.status.textContent = 'delivered';
+        n.msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await new Promise(r => setTimeout(r, 450));
+      }
+      await new Promise(r => setTimeout(r, 600));
+      const out = $('sorry-outro');
+      out.textContent = SR.outro || '';
+      out.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (C.sorry && C.sorry.body) {
+        $('sorry-letter').textContent = SR.letterLink || 'read my letter again';
+        setTimeout(() => $('sorry-letter-wrap').classList.remove('hidden'), 900);
+      }
+    };
+  }
 
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(play);
 })();

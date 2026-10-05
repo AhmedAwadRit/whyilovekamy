@@ -332,6 +332,26 @@ window.KAMY = {
     doneLine: "every night, no matter where you end up, i'll come find you."
   },
 
+  /* ---- "i'm sorry" (pops up as soon as she opens the site) -------------- */
+  /* Shows once on her device; change id to a new number to show it again
+     (e.g. if you rewrite it), or set everyVisit: true to show it every time.
+     on: false turns it off. whyilovekamy.com/#sorry always opens it. */
+  sorry: {
+    on: true,
+    id: 1,
+    everyVisit: false,
+    title: "i'm sorry",
+    body: [
+      "kamy, i'm sorry. not the quick kind of sorry you say just to make things go away. the real kind, the one that's been sitting heavy in my chest ever since.",
+      "i never wanted to hurt you. you're the last person in the world i'd ever want to feel small, or unheard, or alone, and i hate that i made you feel any of that, even for a second.",
+      "i keep replaying it, thinking about everything i should have said instead. every version ends the same way: me wishing i had just stopped, held your hand, and listened.",
+      "you mean the world to me. that didn't change for a single moment, not even in the middle of it.",
+      "i'm not asking you to pretend it didn't happen. i just want you to know that i'm sorry, that i'll do better, and that whenever you're ready, i'll be right here. like always."
+    ],
+    signature: "Ahmed",
+    closeLabel: "close"
+  },
+
   /* ---- Cloud shadow theater (tap a cloud) ------------------------------- */
   /* She slides clouds across the moon to make a shadow picture; each one
      comes alive as a tiny scene. The shapes are drawn in js/shadows.js:
@@ -427,6 +447,24 @@ window.KAMY = {
   secretsIntro: "drafts, 2am thoughts, and messages i typed and never sent.",
   secretsSendButton: "send them anyway?",
   secretsOutro: "okay. now you know all of them.",
+
+  /* The second tab on that page: messages from after the argument.
+     Add " - something" to the end of one to change the "unsent" under it. */
+  sorryTexts: {
+    tab: "i'm sorry",
+    intro: "the ones i wrote after we argued.",
+    messages: [
+      "I'm sorry kamy",
+      "You mean the world to me",
+      "I never ever wanted to hurt you",
+      "I hate myself over what has happened between us",
+      "I still care about you and always will",
+      "I love you yesterday, now, tomorrow, and forever"
+    ],
+    sendButton: "send them",
+    outro: "i meant every single one.",
+    letterLink: "read my letter again"
+  },
 
   /* ---- A call from the moon (end of "things i never tell you") --------- */
   /* Your voice clips live in assets/audio/call/. Each part plays its clip,

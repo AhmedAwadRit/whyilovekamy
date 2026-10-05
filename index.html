@@ -66,6 +66,20 @@
   </div>
 
   <!-- Letter -->
+  <!-- "i'm sorry" (shows as soon as she opens the site) -->
+  <div class="modal" id="sorry-modal" role="dialog" aria-labelledby="sorry-title">
+    <div class="backdrop"></div>
+    <div class="panel sorry">
+      <canvas id="sorry-art" width="128" height="84" aria-hidden="true"></canvas>
+      <div class="paper">
+        <h2 id="sorry-title"></h2>
+        <div id="sorry-body"></div>
+        <p class="signature" id="sorry-sign"></p>
+        <button class="pixel-btn" id="sorry-close" type="button" data-close></button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal" id="letter-modal" role="dialog" aria-label="A letter for you">
     <div class="backdrop" data-close></div>
     <div class="panel letter">
@@ -320,6 +334,7 @@
   <script src="js/piano.js"></script>
   <script src="js/fort.js"></script>
   <script src="js/shadows.js"></script>
+  <script src="js/sorry.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
