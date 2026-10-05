@@ -187,6 +187,27 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .paper .signoff { margin-bottom: 0; }
 .paper .signature { color: var(--rose); margin: 0; }
 
+/* The ice cream cart */
+.panel.icecream { width: min(520px, 100%); padding: 18px 20px 20px; background: var(--panel); box-shadow: 0 -4px 0 var(--border), 0 4px 0 var(--border), -4px 0 0 var(--border), 4px 0 0 var(--border); }
+#ic-intro { font-size: 20px; color: var(--muted); margin: -8px 0 12px; }
+.ic-top { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; margin: 0 -20px 6px; padding: 8px 20px; position: sticky; top: -18px; z-index: 1; background: var(--panel); }
+#ic-art { width: 100px; height: 160px; image-rendering: pixelated; background: var(--panel-2); }
+#ic-name { font-size: 22px; line-height: 1.05; color: var(--text); margin: 0 0 8px; }
+#ic-desc { font-size: 20px; line-height: 1.05; color: var(--pink); margin: 0; min-height: 1.1em; }
+.icecream h3 { font-family: var(--title); font-weight: normal; font-size: 9px; color: var(--gold); margin: 14px 0 8px; }
+#ic-count { color: var(--muted); }
+.ic-row, .ic-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.ic-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 0; cursor: pointer;
+  font: 20px var(--body); color: var(--text); background: var(--panel-2); box-shadow: 0 0 0 2px var(--ink);
+}
+.ic-chip canvas { width: 24px; height: 18px; image-rendering: pixelated; }
+.ic-chip.on { background: var(--pink); color: var(--ink); }
+.ic-chip:active { transform: translateY(2px); }
+.ic-actions { display: flex; justify-content: center; gap: 14px; margin-top: 18px; }
+.ic-actions .pixel-btn { font-size: 9px; }
+.ic-actions .pixel-btn:disabled { opacity: .45; cursor: default; }
+
 /* "i'm sorry" */
 .panel.sorry {
   width: min(460px, 100%); padding: 0; overflow: auto; max-height: calc(100dvh - 32px);

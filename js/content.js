@@ -332,6 +332,29 @@ window.KAMY = {
     doneLine: "every night, no matter where you end up, i'll come find you."
   },
 
+  /* ---- The ice cream cart (in the field) ------------------------------- */
+  /* note = the little line under her ice cream when she picks that flavor.
+     (Each flavor's colors are drawn in js/icecream.js, by id.) */
+  icecream: {
+    label: "ice cream",
+    title: "the ice cream cart",
+    intro: "make your own. i'm buying.",
+    flavors: [
+      { id: "cottoncandy", name: "Cotton Candy", note: "the baskin robbins one. obviously." },
+      { id: "mintchip", name: "Mint Chocolate Chip", note: "a classic. like you." },
+      { id: "strawberrymocha", name: "Strawberry Mocha", note: "coffee AND strawberries. of course you would." },
+      { id: "pbchocolate", name: "Peanut Butter Chocolate", note: "dangerous. one scoop is never enough." },
+      { id: "saltedcaramel", name: "Salted Caramel Chocolate", note: "sweet and a little salty. reminds me of someone." },
+      { id: "matcha", name: "Matcha", note: "for the girl who orders matcha every single time." },
+      { id: "lychee", name: "Lychee", note: "your favorite fruit, now in scoop form." },
+      { id: "pineapple", name: "Pineapple Sorbet", note: "pineapple: the official fruit of this website." },
+      { id: "cookies", name: "Cookies & Cream", note: "the safe choice. no judgment." },
+      { id: "moon", name: "Midnight Moon", note: "only sold here. tastes like stars (and vanilla)." }
+    ],
+    served: "two of those, coming right up. look at the hill.",
+    fullNote: "three is the limit. (i'll share mine.)"
+  },
+
   /* ---- "i'm sorry" (pops up as soon as she opens the site) -------------- */
   /* Shows once on her device; change id to a new number to show it again
      (e.g. if you rewrite it), or set everyVisit: true to show it every time.

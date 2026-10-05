@@ -89,7 +89,7 @@
   const ctx = canvas.getContext('2d');
   let W, H, scale, w, h, groundY;
   let bg, fg, moonSprite, moonGlow = [], cloudSprite;
-  let moon, rocket, rocketOutline, wishStar, noteStar, airpod, arcade, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
+  let moon, rocket, rocketOutline, wishStar, noteStar, airpod, arcade, cart, items = [], stars = [], dust = [], flowers = [], planted = [], drawables = [];
   let fireflies = [], clouds = [], particles = [], mound;
 
   const garden = registerVisit();
@@ -151,6 +151,8 @@
     // another lost airpod, lying in the grass (the airpod hunt)
     // the little arcade cabinet, standing at the edge of the field
     arcade = { kind: 'arcade', x: Math.round(w * 0.82), y: groundY + 7 };
+    // the ice cream cart
+    cart = { kind: 'cart', x: Math.round(w * 0.42), y: groundY + 8 };
     airpod = { kind: 'airpod', x: Math.round(w * 0.6), y: Math.min(h - 6, groundY + Math.round(fieldH * 0.78)) };
     const defs = [
       { id: 'headphones', sprite: S.headphones, fx: 0.11, dy: -4, label: 'our playlist', action: openPlaylist },
@@ -625,6 +627,7 @@
     const hop = cheering && Math.floor(state.t * 6) % 2 ? 1 : 0;
     if (state.tickle) drawTickle();
     else ctx.drawImage(cheering ? (hop ? S.friends.point : S.friends.base) : friendsFrame(), mound.friendsX, mound.friendsTop - 4 - hop);
+    drawIcecreams(cheering);
     drawBook();
     drawSnackTower();
     drawWishStar();
@@ -681,6 +684,7 @@
 
     drawAirpod();
     drawArcade();
+    drawCart();
     drawFinale();
     for (const p of particles) drawParticle(p);
   }
@@ -698,6 +702,36 @@
     }
   }
   let airpodOutline = null;
+
+  // the ice cream cart
+  let cartOutline = null;
+  function drawCart() {
+    const spr = window.ICECREAM.cart, x = cart.x - (spr.width >> 1), y = cart.y - spr.height;
+    ctx.fillStyle = 'rgba(10,8,24,.45)'; ctx.fillRect(x + 1, cart.y, spr.width - 2, 1);
+    if (state.hover && state.hover.kind === 'cart') ctx.drawImage(cartOutline || (cartOutline = S.outline(spr, '#fff3d6')), x - 1, y - 1);
+    else ctx.drawImage(spr, x, y);
+  }
+
+  /* After she serves an ice cream, the two of them eat theirs on the hill:
+     a cone in each outside hand, lifted up for a bite every few seconds. */
+  function drawIcecreams(busy) {
+    const ic = state.icecream;
+    if (!ic) return;
+    const e = state.t - ic.t0;
+    if (e > 48) { state.icecream = null; return; }
+    if (busy || state.tickle || friendsFrame() !== S.friends.base) return;
+    const fx = mound.friendsX, ft = mound.friendsTop;
+    const lifted = k => (e + k) % 3.4 > 2.5;
+    const bites = k => Math.min(3, Math.floor((e + k) / 12));
+    const hold = (x, k, armX, i) => {
+      const y = ft + (lifted(k) ? 1 : 4);
+      window.ICECREAM.drawHeld(ctx, x, y, ic.cr, i, bites(k));
+      ctx.fillStyle = '#080a20';
+      ctx.fillRect(armX, y + 3, 1, Math.max(1, ft + 6 - (y + 3)));   // the arm down to the body
+    };
+    hold(fx - 2, 0, fx - 1, 0);          // her, on the left
+    hold(fx + 16, 1.3, fx + 15, 1);      // him, on the right
+  }
 
   // the arcade cabinet: its screen flickers between two colors
   let arcadeOutline = null;
@@ -897,6 +931,8 @@
     if (p.x >= mound.friendsX - 1 && p.x <= mound.friendsX + 16 && p.y >= mound.friendsTop - 3 && p.y <= mound.friendsTop + 9) {
       return { kind: 'friends', x: mound.friendsX + 7, y: mound.friendsTop };
     }
+    // the ice cream cart
+    if (p.x >= cart.x - 6 && p.x <= cart.x + 6 && p.y >= cart.y - 11 && p.y <= cart.y + 2) return { ...cart, y: cart.y - 11 };
     // the arcade cabinet
     if (p.x >= arcade.x - 6 && p.x <= arcade.x + 6 && p.y >= arcade.y - 16 && p.y <= arcade.y + 2) return { ...arcade, y: arcade.y - 14 };
     // the airpod in the grass
@@ -936,6 +972,7 @@
     if (t.kind === 'firefly') return (C.fireflies && C.fireflies.label) || 'a lost firefly';
     if (t.kind === 'airpod') return (C.airpods && C.airpods.label) || 'an airpod?';
     if (t.kind === 'arcade') return (C.arcade && C.arcade.label) || 'the arcade';
+    if (t.kind === 'cart') return (C.icecream && C.icecream.label) || 'ice cream';
     if (t.kind === 'shooting' && t.victory) return 'catch it!';
     return '';
   }
@@ -1008,6 +1045,7 @@
     if (t.kind === 'friends') return startTickle();
     if (t.kind === 'firefly') return openFireflies();
     if (t.kind === 'arcade') { A.sfx('open'); return window.ARCADE.open(); }
+    if (t.kind === 'cart') return openIcecream();
     if (t.kind === 'airpod') {
       A.sfx('open');
       return window.AIRPODS.open(res => {
@@ -2156,6 +2194,7 @@
         ['the camera', 'our photos. they start blurry: tap one and rub it gently to develop it. "reset photos" makes them blurry again.', tick(dev >= photos, `${dev}/${photos}`)],
         ['the seed packet', 'plant your own flower with a note tucked inside. it stays in the field for good.'],
         ['the brightest firefly', 'a lost one. tap it and draw glowing paths to lead the fireflies home.', tick(flag('kamy.fireflies.done'), flag('kamy.fireflies.done') ? 'done' : '')],
+        ['the ice cream cart', 'build your own ice cream. when you serve it, look at the two of us on the hill.'],
         ['the arcade cabinet', 'little games. a star next to one means you beat it.', tick(false, `${window.ARCADE.GAMES.filter(g => window.ARCADE.done(g[0])).length} beaten`)],
         ['the airpod in the grass', `you lost another one. tap it: all ${window.AIRPODS.TOTAL} of the ones you've lost are hiding in three messy piles.`, tick(flag('kamy.airpods.done'), flag('kamy.airpods.done') ? 'all found' : '')]
       ]],
@@ -2422,6 +2461,17 @@
     // "i'm sorry": the first thing she sees
     if (window.SORRY && window.SORRY.due()) setTimeout(openSorry, 700);
   }
+  function openIcecream() {
+    A.sfx('open');
+    window.ICECREAM.open((cr, name) => {
+      closeModal($('icecream-modal'));
+      state.icecream = { t0: state.t, cr };
+      A.sfx('grow');
+      toast((C.icecream && C.icecream.served) || 'two of those, coming right up. look at the hill.', 4500);
+    });
+    openModal('icecream-modal');
+  }
+
   function openSorry() {
     if (state.modal) closeModal(state.modal);
     A.setOverride('rain');
@@ -2448,6 +2498,8 @@
     firefly: () => ({ x: fireflies[0].x, y: fireflies[0].y }),
     airpod: () => airpod,
     arcade: () => arcade,
+    cart: () => cart,
+    icecream: () => state.icecream,
     sorry: () => openSorry(),
     finale: () => fireflyFinale(),
     book: () => bookPos(),

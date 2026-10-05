@@ -66,6 +66,33 @@
   </div>
 
   <!-- Letter -->
+  <!-- The ice cream cart -->
+  <div class="modal" id="icecream-modal" role="dialog" aria-labelledby="ic-title">
+    <div class="backdrop" data-close></div>
+    <div class="panel icecream">
+      <button class="close" data-close aria-label="Close">x</button>
+      <h2 id="ic-title"></h2>
+      <p id="ic-intro"></p>
+      <div class="ic-top">
+        <canvas id="ic-art" width="40" height="64" aria-hidden="true"></canvas>
+        <div class="ic-info">
+          <p id="ic-name"></p>
+          <p id="ic-desc"></p>
+        </div>
+      </div>
+      <h3>holder</h3>
+      <div id="ic-holders" class="ic-row"></div>
+      <h3>scoops <span id="ic-count"></span></h3>
+      <div id="ic-flavors" class="ic-grid"></div>
+      <h3>toppings</h3>
+      <div id="ic-toppings" class="ic-row"></div>
+      <div class="ic-actions">
+        <button id="ic-undo" class="pixel-btn" type="button"></button>
+        <button id="ic-serve" class="pixel-btn" type="button"></button>
+      </div>
+    </div>
+  </div>
+
   <!-- "i'm sorry" (shows as soon as she opens the site) -->
   <div class="modal" id="sorry-modal" role="dialog" aria-labelledby="sorry-title">
     <div class="backdrop"></div>
@@ -335,6 +362,7 @@
   <script src="js/fort.js"></script>
   <script src="js/shadows.js"></script>
   <script src="js/sorry.js"></script>
+  <script src="js/icecream.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
