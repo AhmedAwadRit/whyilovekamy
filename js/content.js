@@ -551,27 +551,12 @@ window.KAMY = {
         choices: [
           { say: "every word", next: "every" },
           { say: "why'd you never send them?", next: "why" },
-          { say: "read what?", next: "readwhat" },
-          { say: "about the other day...", next: "otherday" }
+          { say: "read what?", next: "readwhat" }
         ]
       },
       readwhat: {
         audio: "", text: "the texts. the ones i wrote and never sent. you just read all of them.",
         choices: [ { say: "every word", next: "every" }, { say: "why'd you never send them?", next: "why" } ]
-      },
-      otherday: {
-        audio: "", text: "i'm sorry. i should have said it properly. not over text, not while we were both upset.",
-        choices: [ { say: "i'm sorry too", next: "sorrytoo" }, { say: "i'm still upset", next: "stillupset" } ]
-      },
-      sorrytoo: {
-        audio: "", text: "so... are we okay?",
-        choices: [ { say: "we're okay", next: "okay" }, { say: "almost", next: "almost" } ]
-      },
-      okay: { audio: "", text: "...good. that's all i needed to hear tonight.", ending: "we're okay" },
-      almost: { audio: "", text: "almost is okay. i'll take almost. i'll be here for the rest.", ending: "almost" },
-      stillupset: {
-        audio: "", text: "that's okay. you're allowed to be. i'll still be here when you're not.",
-        choices: [ { say: "thank you", next: "goodnight" }, { say: "just stay on the line", next: "stay" } ]
       },
 
       /* -- "every word" -- */
