@@ -294,9 +294,28 @@
     }).catch(plain);
   }
 
+  /* Endings: each one she reaches is remembered on her device, so she can
+     see how many of them she's found and call back for the others. */
+  const ENDKEY = 'kamy.call.endings';
+  const allEndings = [...new Set(Object.values(CALL.parts || {}).flatMap(p => [p.ending, ...(p.choices || []).map(c => c.ending)]).filter(Boolean))];
+  const foundEndings = () => { try { return (JSON.parse(localStorage.getItem(ENDKEY)) || []).filter(e => allEndings.includes(e)); } catch (e) { return []; } };
+  function endCard(name) {
+    const found = foundEndings(), fresh = !found.includes(name);
+    if (fresh) { found.push(name); try { localStorage.setItem(ENDKEY, JSON.stringify(found)); } catch (e) {} }
+    const note = document.createElement('p');
+    note.className = 'call-ending';
+    note.textContent = `${fresh ? 'new ending' : 'ending'}: "${name}" · ${found.length}/${allEndings.length} found`;
+    const b = document.createElement('button');
+    b.className = 'pixel-btn'; b.type = 'button'; b.textContent = 'hang up';
+    b.addEventListener('click', hangUp);
+    $('call-choices').replaceChildren(note, b);
+    if (fresh) { beep(1568, 0, 0.08, 0.03); beep(2093, 0.1, 0.12, 0.03); }
+  }
+
   function offerChoices(part) {
     const box = $('call-choices');
     if (part.then) { setTimeout(() => speak(part.then), 350); return; } // keeps talking
+    if ((!part.choices || !part.choices.length) && part.ending) return endCard(part.ending);
     if (!part.choices || !part.choices.length) {
       const b = document.createElement('button');
       b.className = 'pixel-btn'; b.type = 'button'; b.textContent = 'hang up';
@@ -311,6 +330,7 @@
         box.replaceChildren();
         const sub = $('call-sub');
         sub.classList.add('me'); sub.textContent = ch.say; // what she said
+        if (!ch.next && ch.ending) { $('call-wave').classList.remove('talking'); setTimeout(() => endCard(ch.ending), 1100); return; }
         setTimeout(() => speak(ch.next), 1300);
       });
       return b;
@@ -326,7 +346,8 @@
     beep(440, 0, 0.1, 0.04); beep(330, 0.12, 0.15, 0.04);
     $('call-status').textContent = 'call ended · ' + $('call-status').textContent;
     $('call-wave').classList.remove('talking');
-    setTimeout(() => { $('call').hidden = true; $('call-btn').textContent = 'call again'; }, 1400);
+    const n = foundEndings().length;
+    setTimeout(() => { $('call').hidden = true; $('call-btn').textContent = n && allEndings.length ? `call again (${n}/${allEndings.length} endings)` : 'call again'; }, 1400);
   }
 
   /* ---- Voicemail (secret) ------------------------------------------------- */
@@ -421,6 +442,7 @@
     beep(880, 0, 0.06, 0.03);
     if (resumeId) { const id = resumeId; resumeId = null; setTimeout(() => speak(id), 400); }
   });
+  window.__endings = () => ({ all: allEndings, found: foundEndings() }); // (tests)
   window.__vm = { open: openVoicemail, state: () => ({ open: !$('vm').hidden, playing: vmNow && vmNow.v.name, resumeId, speaking: speaking && speaking.id }) }; // (tests)
 
   /* ---- The "i'm sorry" tab ------------------------------------------------ */

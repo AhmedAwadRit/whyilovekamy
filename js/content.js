@@ -475,11 +475,14 @@ window.KAMY = {
     button: "the moon is calling...",
     caller: "the moon",
     start: "hello",
-    /* Parts with audio: "" don't have a recording yet: they show their text
-       as subtitles instead. When you record one, drop the file in
-       assets/audio/call/ and put its path in audio (and change the text to
-       match what you actually said, or empty it to hide the subtitles).
-       A choice with next: "" hangs up. */
+    /* Each part plays its clip (audio) or, without one, shows its text as
+       subtitles. Then it goes straight on ("then"), lets her pick what to
+       say ("choices"), or ends the call. Parts with an "ending" name are
+       endings: she sees which one she found and how many there are, so she
+       can call back and try other paths. A choice with next: "" hangs up
+       (give it an ending name too, to count it).
+       To add a recording: put the file in assets/audio/call/, set audio to
+       its path, and change text to what you said (or "" to hide subtitles). */
     parts: {
       hello: { audio: "assets/audio/call/hello.m4a", text: "", then: "areyouup" },
       areyouup: {
@@ -487,25 +490,91 @@ window.KAMY = {
         choices: [
           { say: "i'm up", next: "up" },
           { say: "i was asleep...", next: "asleep" },
-          { say: "who is this?", next: "whothis" }
+          { say: "who is this?", next: "whothis" },
+          { say: "why are you calling so late?", next: "late" }
         ]
       },
+
+      /* -- "who is this?" -- */
       whothis: {
         audio: "", text: "who else would call you this late? it's the moon. ...okay, it's me.",
+        choices: [
+          { say: "i'm up", next: "up" },
+          { say: "i was asleep...", next: "asleep" },
+          { say: "wrong number", next: "wrongnumber" }
+        ]
+      },
+      wrongnumber: {
+        audio: "", text: "oh. sorry. i was looking for a girl who reads every word i never send.",
+        choices: [ { say: "wait, it's me!", next: "itsme" }, { say: "goodnight, stranger", next: "stranger" } ]
+      },
+      itsme: {
+        audio: "", text: "i know. i'd know your voice anywhere.",
         choices: [ { say: "i'm up", next: "up" }, { say: "i was asleep...", next: "asleep" } ]
       },
+      stranger: { audio: "", text: "goodnight, stranger. call me if you ever see her.", ending: "the stranger" },
+
+      /* -- "why are you calling so late?" -- */
+      late: {
+        audio: "", text: "i couldn't sleep. and when i can't sleep, i think about you. so... here we are.",
+        choices: [ { say: "what were you thinking about?", next: "thinking" }, { say: "go to sleep, moon", next: "gosleep" } ]
+      },
+      thinking: {
+        audio: "", text: "honestly? your laugh. the one where you can't breathe and you hit my arm.",
+        choices: [ { say: "you're so cheesy", next: "cheesy" }, { say: "what else?", next: "whatelse" } ]
+      },
+      cheesy: {
+        audio: "", text: "i'm the moon. cheesy is literally my whole thing.",
+        choices: [ { say: "okay, that was funny", next: "funny" }, { say: "goodnight, cheeseball", next: "goodnight" } ]
+      },
+      funny: { audio: "", text: "got you. that's all i wanted. goodnight, kamy.", ending: "made you laugh" },
+      whatelse: {
+        audio: "", text: "how you always know something's wrong before i say a single word.",
+        choices: [ { say: "is something wrong?", next: "wrong" }, { say: "i know you", next: "knowyou" } ]
+      },
+      wrong: { audio: "", text: "not anymore. not while you're on the phone.", then: "goodnight" },
+      knowyou: { audio: "", text: "you do. better than anyone ever has.", ending: "better than anyone" },
+      gosleep: {
+        audio: "", text: "okay, okay. but you have to say it first.",
+        choices: [ { say: "say what?", next: "saywhat" }, { say: "goodnight, moon", next: "goodnight" } ]
+      },
+      saywhat: {
+        audio: "", text: "you know what.",
+        choices: [ { say: "i love you", next: "iloveyou" }, { say: "nope", next: "nope" } ]
+      },
+      iloveyou: { audio: "", text: "...i love you more. goodnight.", ending: "said it first" },
+      nope: { audio: "", text: "...fine. i'll say it, then. i love you. goodnight, kamy.", ending: "made me say it" },
+
+      /* -- "i'm up" -- */
       up: {
         audio: "assets/audio/call/im-up.m4a", text: "",
         choices: [
           { say: "every word", next: "every" },
           { say: "why'd you never send them?", next: "why" },
-          { say: "read what?", next: "readwhat" }
+          { say: "read what?", next: "readwhat" },
+          { say: "about the other day...", next: "otherday" }
         ]
       },
       readwhat: {
         audio: "", text: "the texts. the ones i wrote and never sent. you just read all of them.",
         choices: [ { say: "every word", next: "every" }, { say: "why'd you never send them?", next: "why" } ]
       },
+      otherday: {
+        audio: "", text: "i'm sorry. i should have said it properly. not over text, not while we were both upset.",
+        choices: [ { say: "i'm sorry too", next: "sorrytoo" }, { say: "i'm still upset", next: "stillupset" } ]
+      },
+      sorrytoo: {
+        audio: "", text: "so... are we okay?",
+        choices: [ { say: "we're okay", next: "okay" }, { say: "almost", next: "almost" } ]
+      },
+      okay: { audio: "", text: "...good. that's all i needed to hear tonight.", ending: "we're okay" },
+      almost: { audio: "", text: "almost is okay. i'll take almost. i'll be here for the rest.", ending: "almost" },
+      stillupset: {
+        audio: "", text: "that's okay. you're allowed to be. i'll still be here when you're not.",
+        choices: [ { say: "thank you", next: "goodnight" }, { say: "just stay on the line", next: "stay" } ]
+      },
+
+      /* -- "every word" -- */
       every: {
         audio: "assets/audio/call/every.m4a", text: "",
         choices: [
@@ -519,30 +588,52 @@ window.KAMY = {
         choices: [ { say: "say another one", next: "another" }, { say: "goodnight", next: "goodnight" } ]
       },
       another: { audio: "", text: "i think about you more than i'll ever admit. that's all you're getting tonight.", then: "goodnight" },
-      yours: { audio: "", text: "you do? ...tell me tomorrow. in person. i want to see your face when you say it.", then: "goodnight" },
+      yours: { audio: "", text: "you do? ...tell me tomorrow. in person. i want to see your face when you say it.", ending: "tell me tomorrow" },
+
+      /* -- "why'd you never send them?" -- */
       why: {
         audio: "assets/audio/call/why.m4a", text: "",
         choices: [
           { say: "you can tell me anything", next: "anything" },
-          { say: "send them next time", next: "nexttime" }
+          { say: "send them next time", next: "nexttime" },
+          { say: "you should've sent them", next: "shouldhave" }
         ]
       },
       anything: { audio: "", text: "i know. that's why i'm calling.", then: "goodnight" },
       nexttime: { audio: "", text: "deal. but you have to answer every single one.", then: "goodnight" },
+      shouldhave: {
+        audio: "", text: "i know. i was scared of how much i meant them.",
+        choices: [ { say: "don't be scared", next: "notscared" }, { say: "i'm glad i got to read them", next: "glad" } ]
+      },
+      notscared: { audio: "", text: "okay. no more drafts. from now on, i send everything.", ending: "no more drafts" },
+      glad: { audio: "", text: "then i'm glad too. some things are better heard than read anyway.", ending: "heard, not read" },
+
+      /* -- "i was asleep..." -- */
       asleep: {
         audio: "assets/audio/call/i-miss-you.m4a", text: "",
-        choices: [ { say: "i miss you too", next: "goodnight" }, { say: "then come over", next: "comeover" } ]
+        choices: [
+          { say: "i miss you too", next: "goodnight" },
+          { say: "then come over", next: "comeover" },
+          { say: "how much?", next: "howmuch" }
+        ]
       },
       comeover: {
         audio: "", text: "it's way too late. ...don't tempt me.",
         choices: [ { say: "i'm serious", next: "serious" }, { say: "fine. goodnight", next: "goodnight" } ]
       },
-      serious: { audio: "", text: "...okay. next time, i'm not hanging up first.", then: "goodnight" },
+      serious: { audio: "", text: "...okay. next time, i'm not hanging up first.", ending: "next time" },
+      howmuch: {
+        audio: "", text: "more than the moon misses the sun. ...okay, that one was bad.",
+        choices: [ { say: "it was terrible", next: "terrible" }, { say: "it was cute", next: "goodnight" } ]
+      },
+      terrible: { audio: "", text: "you love my terrible jokes. admit it. goodnight.", ending: "terrible jokes" },
+
+      /* -- goodnight -- */
       goodnight: {
         audio: "assets/audio/call/goodnight.m4a", text: "",
-        choices: [ { say: "don't hang up yet", next: "stay" }, { say: "goodnight", next: "" } ]
+        choices: [ { say: "don't hang up yet", next: "stay" }, { say: "goodnight", next: "", ending: "goodnight" } ]
       },
-      stay: { audio: "", text: "okay. i'll stay on until you fall asleep." }
+      stay: { audio: "", text: "okay. i'll stay on until you fall asleep.", ending: "stayed on the line" }
     }
   },
 
